@@ -5,6 +5,7 @@ const http = require("http");
 const path = require("path");
 const WebSocket = require("ws");
 const { readFileSync } = require("fs");
+const { List } = require("immutable");
 
 const loadConfigFile = require("rollup/dist/loadConfigFile.js");
 const rollup = require("rollup");
@@ -50,6 +51,7 @@ const watcherPromise = loadConfigFile(
 //start our server
 watcherPromise
     .then(watcher => {
+        const webSockets = { list: List([]) };
         wss.on("connection", ws => {
             //connection is up, let's add a simple simple event
             ws.on("message", message => {
@@ -58,21 +60,30 @@ watcherPromise
                 ws.send(`Hello, you sent -> ${message}`);
             });
 
+            function sendBundle(binary) {
+                ws.send(binary);
+            }
+
             ws.on("close", () => {
-                watcher.close();
+                webSockets.list = webSockets.list.delete(
+                    webSockets.list.indexOf(sendBundle)
+                );
             });
 
             //send immediatly a feedback to the incoming connection
-
-            watcher.on("event", e => {
-                if (e.code === "END") {
-                    console.log(`\x1b[32m%s\x1b[0m`, "Build Successfully!");
-
-                    ws.send(
-                        readFileSync("build/bundle.js", { encoding: "utf-8" })
-                    );
-                }
+            ws.on("open", () => {
+                webSockets.list = webSockets.list.push(sendBundle);
             });
+        });
+
+        watcher.on("event", e => {
+            if (e.code === "END") {
+                console.log(`\x1b[32m%s\x1b[0m`, "Build Successfully!");
+                const binary = readFileSync("build/bundle.js", {
+                    encoding: "utf-8",
+                });
+                webSockets.list.forEach(v => v(binary));
+            }
         });
 
         watcher.on("event", e => {
