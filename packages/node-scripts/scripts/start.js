@@ -71,9 +71,8 @@ watcherPromise
             });
 
             //send immediatly a feedback to the incoming connection
-            ws.on("open", () => {
-                webSockets.list = webSockets.list.push(sendBundle);
-            });
+            console.log(`\x1b[32m%s\x1b[0m`, "Connected!");
+            webSockets.list = webSockets.list.push(sendBundle);
         });
 
         watcher.on("event", e => {
