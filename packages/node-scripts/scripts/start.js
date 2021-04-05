@@ -58,6 +58,10 @@ watcherPromise
                 ws.send(`Hello, you sent -> ${message}`);
             });
 
+            ws.on("close", () => {
+                watcher.close();
+            });
+
             //send immediatly a feedback to the incoming connection
 
             watcher.on("event", e => {
