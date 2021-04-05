@@ -1,0 +1,19 @@
+{
+  "name": "@design-express/node-template",
+  "version": "0.0.1",
+  "keywords": [
+    "designexpress",
+    "design Express",
+    "nexivil"
+  ],
+  "description": "The base template for Design Express node.",
+  "author": "liradb2000",
+  "license": "MIT",
+  "engines": {
+    "node": ">=10"
+  },
+  "files": [
+    "template",
+    "template.json"
+  ]
+}

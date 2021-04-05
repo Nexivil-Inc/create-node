@@ -1,0 +1,14 @@
+{
+  "package": {
+    "devDependencies": {
+      "@rollup/plugin-commonjs": "^17.1.0",
+      "@rollup/plugin-json": "^4.1.0",
+      "@rollup/plugin-node-resolve": "^11.2.1",
+      "eslint": "^7.23.0",
+      "rollup": "^2.35.1"
+    },
+    "eslintConfig": {
+      "extends": "standard"
+    }
+  }
+}
