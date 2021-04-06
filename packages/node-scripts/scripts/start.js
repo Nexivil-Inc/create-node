@@ -96,9 +96,8 @@ watcherPromise
         watcher.on("event", e => {
             if (e.code === "ERROR") {
                 console.log(
-                    `\x1b[31m\x1b[4m[${e.error.name}]${e.error.parserError.name}:${e.error.parserError.message}\x1b[0m`
+                    `\x1b[31m%s\x1b[0m`, `[${e.error.name}]${e.error.message}`
                 );
-                console.log(`\x1b[33m${e.error.loc.file}\x1b[0m`);
                 console.log(e.error.frame);
             }
         });
