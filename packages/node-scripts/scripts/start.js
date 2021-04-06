@@ -14,11 +14,12 @@ const { replaceMap } = require("../utils/replaceMap");
 
 const app = express();
 
-app.get("/bundle.js.map", function (req, res) {
-    res.sendFile("build/bundle.js.map");
-});
 //initialize a simple http server
 const server = http.createServer(app);
+
+app.get("/bundle.js.map", function (req, res) {
+    res.sendFile(path.resolve(appPath, "build/bundle.js.map"));
+});
 
 //initialize the WebSocket server instance
 const wss = new WebSocket.Server({ server });
@@ -83,7 +84,7 @@ watcherPromise
             if (e.code === "END") {
                 console.log(`\x1b[32m%s\x1b[0m`, "Build Successfully!");
                 const binary = replaceMap(
-                    readFileSync("build/bundle.js", {
+                    readFileSync(path.resolve(appPath, "build/bundle.js"), {
                         encoding: "utf-8",
                     })
                 );
