@@ -4,7 +4,7 @@ const express = require("express");
 const http = require("http");
 const path = require("path");
 const WebSocket = require("ws");
-const { readFileSync } = require("fs");
+const { readFileSync, existsSync } = require("fs");
 const { List } = require("immutable");
 
 const loadConfigFile = require("rollup/dist/loadConfigFile.js");
@@ -62,7 +62,17 @@ watcherPromise
             ws.on("message", message => {
                 //log the received message and send it back to the client
                 console.log("received: %s", message);
-                ws.send(`Hello, you sent -> ${message}`);
+
+                if (existsSync(path.resolve(appPath, "build/bundle.js"))) {
+                    const binary = replaceMap(
+                        readFileSync(path.resolve(appPath, "build/bundle.js"), {
+                            encoding: "utf-8",
+                        })
+                    );
+                    ws.send(binary);
+                } else {
+                    ws.send(`Hello, you sent -> ${message}`);
+                }
             });
 
             function sendBundle(binary) {
@@ -96,7 +106,8 @@ watcherPromise
         watcher.on("event", e => {
             if (e.code === "ERROR") {
                 console.log(
-                    `\x1b[31m%s\x1b[0m`, `[${e.error.name}]${e.error.message}`
+                    `\x1b[31m%s\x1b[0m`,
+                    `[${e.error.name}]${e.error.message}`
                 );
                 console.log(e.error.frame);
             }
