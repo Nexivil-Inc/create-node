@@ -8,7 +8,8 @@
     "files": [
         "bin",
         "config",
-        "scripts"
+        "scripts",
+        "utils"
     ],
     "bin": {
         "node-scripts": "./bin/node-scripts.js"

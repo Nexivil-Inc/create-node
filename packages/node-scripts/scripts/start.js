@@ -10,9 +10,13 @@ const { List } = require("immutable");
 const loadConfigFile = require("rollup/dist/loadConfigFile.js");
 const rollup = require("rollup");
 const { appPath } = require("../config/paths");
+const { replaceMap } = require("../utils/replaceMap");
 
 const app = express();
 
+app.get("/bundle.js.map", function (req, res) {
+    res.sendFile("build/bundle.js.map");
+});
 //initialize a simple http server
 const server = http.createServer(app);
 
@@ -78,9 +82,12 @@ watcherPromise
         watcher.on("event", e => {
             if (e.code === "END") {
                 console.log(`\x1b[32m%s\x1b[0m`, "Build Successfully!");
-                const binary = readFileSync("build/bundle.js", {
-                    encoding: "utf-8",
-                });
+                const binary = replaceMap(
+                    readFileSync("build/bundle.js", {
+                        encoding: "utf-8",
+                    })
+                );
+
                 webSockets.list.forEach(v => v(binary));
             }
         });
