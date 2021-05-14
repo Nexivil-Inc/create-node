@@ -19,11 +19,13 @@ process.on("unhandledRejection", err => {
 const spawn = require("cross-spawn");
 const args = process.argv.slice(2);
 
-const scriptIndex = args.findIndex(x => x === "start");
+const scriptIndex = args.findIndex(
+    x => x === "start" || x === "build" || x === "pack" || x === "publish"
+);
 const script = scriptIndex === -1 ? args[0] : args[scriptIndex];
 const nodeArgs = scriptIndex > 0 ? args.slice(0, scriptIndex) : [];
 
-if (["start"].includes(script)) {
+if (["start", "build", "pack", "publish"].includes(script)) {
     const result = spawn.sync(
         process.execPath,
         nodeArgs
