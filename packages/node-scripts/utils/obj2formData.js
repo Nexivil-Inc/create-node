@@ -55,9 +55,9 @@ function objectToFormData(obj, cfg = null, fd = null, pre = null) {
     } else if (isArray(obj)) {
         if (obj.length) {
             obj.forEach((value, index) => {
-                const key = pre + "[" + (cfg.indices ? index : "") + "]";
+                // const key = pre + "[" + (cfg.indices ? index : "") + "]";
 
-                objectToFormData(value, cfg, fd, key);
+                objectToFormData(value, cfg, fd, pre);
             });
         }
     } else if (isDate(obj)) {

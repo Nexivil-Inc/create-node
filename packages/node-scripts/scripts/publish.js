@@ -4,14 +4,18 @@ process.on("unhandledRejection", err => {
     throw err;
 });
 
+const path = require("path");
 const http = require("http");
 const chalk = require("chalk");
 const crypto = require("crypto");
+const { readFileSync, existsSync } = require("fs");
+const ZstdCodec = require("zstd-codec").ZstdCodec;
 
 const { builder } = require("./plugins/builder");
 const { packer } = require("./plugins/packer");
 const { objectToFormData } = require("../utils/obj2formData");
 const { getAuth } = require("../utils/credentials");
+const { appPath } = require("../config/paths");
 
 const emailRegx = new RegExp(
     /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
@@ -23,8 +27,9 @@ builder()
     .then(options => packer(options))
     .then(async ([bin, info]) => {
         // Publish to server(design-express)
-        const { name, version, author } = info;
+        const { name, version, author, readme = null } = info;
         let credential = null;
+        let readmeBin = null;
 
         if (!!author) {
             if (typeof author === "string" && emailRegx.test(author)) {
@@ -48,6 +53,29 @@ builder()
             return;
         }
 
+        if (!!readme) {
+            const readmePath = path.resolve(appPath, readme);
+            if (existsSync(readmePath))
+                readmeBin = await new Promise(r => {
+                    ZstdCodec.run(zstd => {
+                        const streaming = new zstd.Streaming();
+                        const data = readFileSync(readmePath);
+                        r(streaming.compress(data, 6));
+                    });
+                });
+            delete info["readme"];
+        } else {
+            const readmePath = path.resolve(appPath, "readme.md");
+            if (existsSync(readmePath))
+                readmeBin = await new Promise(r => {
+                    ZstdCodec.run(zstd => {
+                        const streaming = new zstd.Streaming();
+                        const data = readFileSync(readmePath);
+                        r(streaming.compress(data, 6));
+                    });
+                });
+        }
+
         const form = new objectToFormData(info, {
             booleansAsIntegers: true,
         });
@@ -55,6 +83,11 @@ builder()
         let integrity = crypto.createHash("sha1").update(bin).digest("hex");
 
         form.append("integrity", integrity);
+        form.append("read_me", Buffer.from(readmeBin), {
+            filename: `${name}-${version}-readme.md`,
+            contentType: "application/octet-stream",
+            knownLength: readmeBin.length,
+        });
         form.append("tgz_file", Buffer.from(bin), {
             filename: `${name}-${version}.xnode`,
             contentType: "nexivil/xnode",
