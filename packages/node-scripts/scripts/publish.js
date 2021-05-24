@@ -5,7 +5,7 @@ process.on("unhandledRejection", err => {
 });
 
 const path = require("path");
-const http = require("http");
+const https = require("https");
 const chalk = require("chalk");
 const crypto = require("crypto");
 const { readFileSync, existsSync } = require("fs");
@@ -94,10 +94,10 @@ builder()
             knownLength: bin.length,
         });
 
-        const httpOptions = {
+        const httpsOptions = {
             method: "POST",
-            hostname: "localhost",
-            port: 8000,
+            hostname: "x.nexivil.com",
+            port: 443,
             path: "/-/package/",
             headers: {
                 ...form.getHeaders(),
@@ -109,7 +109,7 @@ builder()
             },
         };
 
-        const req = http.request(httpOptions, res => {
+        const req = https.request(httpsOptions, res => {
             console.log(`statusCode: ${res.statusCode}`);
 
             res.on("data", d => {
