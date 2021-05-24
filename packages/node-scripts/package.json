@@ -1,6 +1,6 @@
 {
     "name": "@design-express/node-scripts",
-    "version": "0.0.12",
+    "version": "0.0.13",
     "description": "test_dev",
     "engines": {
         "node": "^10.12.0 || >=12.0.0"
