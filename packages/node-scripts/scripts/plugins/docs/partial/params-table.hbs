@@ -1,0 +1,90 @@
+{{!-- {{#if params}}
+
+{{tableHead params "name|Param" "type|Type" "defaultvalue|Default" "description|Description" ~}}
+
+{{#tableRow params "name" "type" "defaultvalue" "description" ~}}
+| {{#if @col1}}{{>param-table-name}} | {{/if~}}
+{{#if @col2}}{{>linked-type-list types=type.names delimiter=" \| " }} | {{/if~}}
+{{#if @col3}}{{>defaultvalue}} | {{/if~}}
+{{#if @col4}}{{{stripNewlines (inlineLinks description)}}} |{{/if}}
+{{/tableRow}}
+
+{{/if}}
+
+{{#if returns}}
+{{#if returns.[0].description~}}
+**Returns**: {{#each returns~}}
+  {{#if type~}}
+  {{#if type.names}}{{>linked-type-list types=type.names delimiter=" \| " ~}}{{/if}}
+  {{~#if description}} - {{{inlineLinks description}}}{{/if~}}
+  {{else~}}
+  {{{inlineLinks description}~}}
+  {{/if~}}
+{{~/each}}
+  
+{{/if}}{{/if}} --}}
+
+```litegraph
+{
+  "title": "{{name}}",
+  "inputs": [
+    {{~#if params~}}
+      {{~#each params~}}
+        {"name":"{{this.name}}"}
+        {{~#unless @last}},{{/unless~}}
+      {{/each}}
+    {{/if}}
+  ],
+  "outputs":[
+    {{~#if returns~}}
+      {{~#if returns.[0].description~}}
+        {{~#each returns~}}
+          {{#outputSplit this~}}
+             {"name":"{{this.name}}"}
+          {{~/outputSplit~}}
+          {{~#unless @last}},{{/unless~}}
+        {{/each}}
+      {{/if}}
+    {{/if}}
+  ]
+}
+```
+
+{{#if params}}
+### INPUTS
+{{!-- {{tableHead params "name|Param" "type|Type" "defaultvalue|Default" "description|Description" ~}} --}}
+
+{{#tableRow params "name" "type" "defaultvalue" "description" ~}}
+{{#if @col1}}
+#### {{#if optional}}[*optional*] {{/if~}}{{{name}~}}
+{{/if~}}
+{{#if @col2~}}
+{{#each type.names}}
+ `{{this}}`
+{{#unless @last}}|{{/unless~}}
+{{/each~}}
+{{/if~}}
+{{#if @col4}}{{{stripNewlines (inlineLinks description)}}}{{/if}}
+{{#if @col3}}{{>defaultvalue}} {{/if}}
+{{/tableRow}}
+
+{{/if}}
+
+{{#if returns}}
+### OUTPUTS
+{{!-- {{tableHead params "name|Param" "type|Type" "defaultvalue|Default" "description|Description" ~}} --}}
+
+{{#if returns.[0].description}}
+{{#each returns}}
+{{#outputSplit this}}
+#### {{this.name}}
+{{~#each type.names}}
+ `{{this}}`
+{{#unless @last}}|{{/unless~}}
+{{/each~}}
+{{this.desc}}
+{{/outputSplit}}
+{{/each}}
+{{/if}}
+
+{{/if}}

@@ -1,0 +1,18 @@
+{{#if properties~}}
+### Properties
+
+{{#tableRow properties "name" "type" "defaultvalue" "description" ~}}
+{{#if @col1}}
+#### {{#if optional}}[*optional*] {{/if~}}{{{name}~}}
+{{/if~}}
+{{#if @col2~}}
+{{#each type.names}}
+ `{{this}}`
+{{#unless @last}}|{{/unless~}}
+{{/each~}}
+{{/if~}}
+{{#if @col4}}{{{stripNewlines (inlineLinks description)}}}{{/if}}
+{{#if @col3}}{{>defaultvalue}} {{/if}}
+{{/tableRow}}
+
+{{/if}}

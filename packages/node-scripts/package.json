@@ -1,6 +1,6 @@
 {
     "name": "@design-express/node-scripts",
-    "version": "0.0.14",
+    "version": "0.0.15",
     "description": "test_dev",
     "engines": {
         "node": "^10.12.0 || >=12.0.0"
@@ -32,6 +32,8 @@
         "rollup": "^2.44.0",
         "rollup-plugin-terser": "^7.0.2",
         "ws": "^7.4.6",
-        "zstd-codec": "^0.1.2"
-    }
+        "zstd-codec": "^0.1.2",
+        "jsdoc-to-markdown": "^7.0.1"
+    },
+    "devDependencies": {}
 }

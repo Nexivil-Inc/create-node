@@ -184,6 +184,7 @@ module.exports = function (
             build: "node-scripts build",
             pack: "node-scripts pack",
             publish: "node-scripts publish",
+            docs: "node-scripts docs",
             // test: "node-scripts test",
             // eject: "node-scripts eject",
         },
@@ -327,6 +328,9 @@ module.exports = function (
     console.log();
     console.log(chalk.cyan(`  ${displayedCommand} run publish`));
     console.log("    Upload the xnode on 'DESIGN EXPRESS'");
+    console.log();
+    console.log(chalk.cyan(`  ${displayedCommand} run docs`));
+    console.log("    Auto-generated Documents'");
     console.log();
     console.log("We suggest that you begin by typing:");
     console.log();
