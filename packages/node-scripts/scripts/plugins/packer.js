@@ -44,11 +44,18 @@ async function packer(options) {
         "utf8"
     );
     const packInfo = JSON.parse(packageInfo);
-    const { name = null, version = null } = packInfo;
-    if (!name || !version) {
+    const { name: _name = null, version = null } = packInfo;
+    if (!_name || !version) {
         console.error(
             chalk.red(`Cannot Parse 'name' or 'version' in package.json`)
         );
+        return;
+    }
+    const { name = null, namespace = null } =
+        /^(?:@(?<namespace>\w+)[/\/])?(?<name>\w+)$/.exec(_name).groups;
+
+    if (!name) {
+        console.error(chalk.red(`Cannot Parse 'name'  in package.json`));
         return;
     }
 
@@ -67,7 +74,13 @@ async function packer(options) {
     );
 
     // writeFileSync()
-    writeFileSync(path.resolve(appPath, `${name}-${version}.xnode`), cpr);
+    writeFileSync(
+        path.resolve(
+            appPath,
+            `${!!namespace ? `${namespace}_` : ""}${name}-${version}.xnode`
+        ),
+        cpr
+    );
     return [cpr, packInfo];
 }
 module.exports = { packer };
