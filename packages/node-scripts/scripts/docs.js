@@ -13,6 +13,8 @@ console.log(chalk.green("Generating documents..."));
 const docs = jsdoc2md.renderSync({
     plugin: __dirname + "/plugins/docs/index.js",
     files: path.resolve(appPath, "./src/**/*.js"),
+    "module-index-format": "groupd",
+    "global-index-format": "grouped",
 });
 if (!existsSync(path.resolve(appPath, "docs")))
     mkdirSync(path.resolve(appPath, "docs"));
