@@ -1,6 +1,6 @@
 {
   "name": "@design-express/node-scripts",
-  "version": "1.0.0-alpha",
+  "version": "1.0.0-alpha.111500",
   "description": "Design Express™ Fabrica node development Tools and Scripts",
   "engines": {
     "node": ">=16.0.0"
@@ -9,8 +9,7 @@
     "bin",
     "config",
     "scripts",
-    "utils",
-    "packages"
+    "utils"
   ],
   "bin": {
     "node-scripts": "./bin/node-scripts.js"
@@ -34,6 +33,7 @@
     "@babel/preset-react": "^7.14.5",
     "@babel/preset-typescript": "^7.15.0",
     "@babel/register": "^7.15.3",
+    "@liradb2000/zstd-codec": "^0.1.4",
     "@svgr/webpack": "^5.5.0",
     "babel-eslint": "^10.1.0",
     "babel-loader": "^8.2.5",
@@ -78,8 +78,7 @@
     "vm-browserify": "^1.1.2",
     "webpack": "^5.58.2",
     "webpack-cli": "^4.9.1",
-    "webpack-dev-server": "^4.10.0",
-    "zstd-codec": "file:packages/zstd-codec-0.1.4.tgz"
+    "webpack-dev-server": "^4.10.0"
   },
   "devDependencies": {
     "@pmmmwh/react-refresh-webpack-plugin": "^0.5.7",
