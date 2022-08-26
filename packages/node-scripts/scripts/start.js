@@ -1,150 +1,162 @@
-#!/usr/bin/env node
-"use strict";
+// @remove-on-eject-begin
+/**
+ * Copyright (c) 2015-present, Facebook, Inc.
+ *
+ * This source code is licensed under the MIT license found in the
+ * LICENSE file in the root directory of this source tree.
+ */
+// @remove-on-eject-end
+'use strict';
 
-const express = require("express");
-const http = require("http");
-const path = require("path");
-const WebSocket = require("ws");
-const { readFileSync, existsSync } = require("fs");
-const { List } = require("immutable");
+// Do this as the first thing so that any code reading it knows the right env.
+process.env.BABEL_ENV = 'development';
+process.env.NODE_ENV = 'development';
 
-const loadConfigFile = require("rollup/dist/loadConfigFile.js");
-const rollup = require("rollup");
-const { appPath } = require("../config/paths");
-const { replaceMap } = require("../utils/replaceMap");
-
-const app = express();
-
-//initialize a simple http server
-const server = http.createServer(app);
-
-app.get("/bundle.js.map", function (req, res) {
-    res.sendFile(path.resolve(appPath, "build/bundle.js.map"));
+// Makes the script crash on unhandled rejections instead of silently
+// ignoring them. In the future, promise rejections that are not handled will
+// terminate the Node.js process with a non-zero exit code.
+process.on('unhandledRejection', err => {
+  throw err;
 });
 
-//initialize the WebSocket server instance
-const wss = new WebSocket.Server({ server });
+// Ensure environment variables are read.
+require('../config/env');
 
-const watcherPromise = loadConfigFile(
-    path.resolve(appPath, "rollup.config.js"),
-    {
-        watch: {
-            include: "src/**",
-        },
+const fs = require('fs');
+const chalk = require('react-dev-utils/chalk');
+const webpack = require('webpack');
+const WebpackDevServer = require('webpack-dev-server');
+const clearConsole = require('react-dev-utils/clearConsole');
+const checkRequiredFiles = require('react-dev-utils/checkRequiredFiles');
+const {
+  choosePort,
+  createCompiler,
+  prepareProxy,
+  prepareUrls,
+} = require('react-dev-utils/WebpackDevServerUtils');
+const openBrowser = require('react-dev-utils/openBrowser');
+const semver = require('semver');
+const paths = require('../config/paths');
+const configFactory = require('../config/webpack.config');
+const createDevServerConfig = require('../config/webpackDevServer.config');
+const getClientEnvironment = require('../config/env');
+const react = require(require.resolve('react', { paths: [paths.appPath] }));
+
+const env = getClientEnvironment(paths.publicUrlOrPath.slice(0, -1));
+const useYarn = fs.existsSync(paths.yarnLockFile);
+const isInteractive = process.stdout.isTTY;
+
+// Warn and crash if required files are missing
+if (!checkRequiredFiles([paths.appHtml, paths.appIndexJs])) {
+  process.exit(1);
+}
+
+// Tools like Cloud9 rely on this.
+const DEFAULT_PORT = parseInt(process.env.PORT, 10) || 3000;
+const HOST = process.env.HOST || '0.0.0.0';
+
+if (process.env.HOST) {
+  console.log(
+    chalk.cyan(
+      `Attempting to bind to HOST environment variable: ${chalk.yellow(
+        chalk.bold(process.env.HOST)
+      )}`
+    )
+  );
+  console.log(
+    `If this was unintentional, check that you haven't mistakenly set it in your shell.`
+  );
+  console.log(
+    `Learn more here: ${chalk.yellow('https://cra.link/advanced-config')}`
+  );
+  console.log();
+}
+
+// We require that you explicitly set browsers and do not fall back to
+// browserslist defaults.
+const { checkBrowsers } = require('react-dev-utils/browsersHelper');
+checkBrowsers(paths.appPath, isInteractive)
+  .then(() => {
+    // We attempt to use the default port but if it is busy, we offer the user to
+    // run on a different port. `choosePort()` Promise resolves to the next free port.
+    return choosePort(HOST, DEFAULT_PORT);
+  })
+  .then(port => {
+    if (port == null) {
+      // We have not found a port.
+      return;
     }
-).then(async ({ options, warnings }) => {
-    // "warnings" wraps the default `onwarn` handler passed by the CLI.
-    // This prints all warnings up to this point:
-    console.log(`We currently have ${warnings.count} warnings`);
 
-    // This prints all deferred warnings
-    warnings.flush();
+    const config = configFactory('development');
+    const protocol = process.env.HTTPS === 'true' ? 'https' : 'http';
+    const appName = require(paths.appPackageJson).name;
 
-    // // options is an array of "inputOptions" objects with an additional "output"
-    // // property that contains an array of "outputOptions".
-    // // The following will generate all outputs for all inputs, and write them to disk the same
-    // // way the CLI does it:
-    // for (const optionsObj of options) {
-    //   const bundle = await rollup.rollup(optionsObj);
-    //   await Promise.all(optionsObj.output.map(bundle.write));
-    // }
+    const useTypeScript = fs.existsSync(paths.appTsConfig);
+    const urls = prepareUrls(
+      protocol,
+      HOST,
+      port,
+      paths.publicUrlOrPath.slice(0, -1)
+    );
+    // Create a webpack compiler that is configured with custom messages.
+    const compiler = createCompiler({
+      appName,
+      config,
+      urls,
+      useYarn,
+      useTypeScript,
+      webpack,
+    });
+    // Load proxy config
+    const proxySetting = require(paths.appPackageJson).proxy;
+    const proxyConfig = prepareProxy(
+      proxySetting,
+      paths.appPublic,
+      paths.publicUrlOrPath
+    );
+    // Serve webpack assets generated by the compiler over a web server.
+    const serverConfig = {
+      ...createDevServerConfig(proxyConfig, urls.lanUrlForConfig),
+      host: HOST,
+      port,
+    };
+    const devServer = new WebpackDevServer(serverConfig, compiler);
+    // Launch WebpackDevServer.
+    devServer.startCallback(() => {
+      if (isInteractive) {
+        clearConsole();
+      }
 
-    // You can also pass this directly to "rollup.watch"
-    // console.log(options[0].output);
-    return rollup.watch(options);
-});
+      if (env.raw.FAST_REFRESH && semver.lt(react.version, '16.10.0')) {
+        console.log(
+          chalk.yellow(
+            `Fast Refresh requires React 16.10 or higher. You are using React ${react.version}.`
+          )
+        );
+      }
 
-//start our server
-watcherPromise
-    .then(watcher => {
-        const webSockets = { list: List([]) };
-        wss.on("connection", ws => {
-            //connection is up, let's add a simple simple event
-            ws.on("message", message => {
-                //log the received message and send it back to the client
-                console.log("received: %s", message);
+      console.log(chalk.cyan('Starting the development server...\n'));
+      openBrowser(urls.localUrlForBrowser);
+    });
 
-                if (existsSync(path.resolve(appPath, "build/bundle.js"))) {
-                    const binary = replaceMap(
-                        readFileSync(path.resolve(appPath, "build/bundle.js"), {
-                            encoding: "utf-8",
-                        })
-                    );
-                    ws.send(binary);
-                } else {
-                    ws.send(`Hello, you sent -> ${message}`);
-                }
-            });
+    ['SIGINT', 'SIGTERM'].forEach(function (sig) {
+      process.on(sig, function () {
+        devServer.close();
+        process.exit();
+      });
+    });
 
-            function sendBundle(binary) {
-                ws.send(binary);
-            }
-
-            ws.on("close", () => {
-                webSockets.list = webSockets.list.delete(
-                    webSockets.list.indexOf(sendBundle)
-                );
-            });
-
-            //send immediatly a feedback to the incoming connection
-            console.log(`\x1b[32m%s\x1b[0m`, "Connected!");
-            webSockets.list = webSockets.list.push(sendBundle);
-        });
-
-        watcher.on("event", e => {
-            if (e.code === "END") {
-                console.log(`\x1b[32m%s\x1b[0m`, "Build Successfully!");
-                const binary = replaceMap(
-                    readFileSync(path.resolve(appPath, "build/bundle.js"), {
-                        encoding: "utf-8",
-                    })
-                );
-
-                webSockets.list.forEach(v => v(binary));
-            }
-        });
-
-        watcher.on("event", e => {
-            if (e.code === "ERROR") {
-                console.log(
-                    `\x1b[31m%s\x1b[0m`,
-                    `[${e.error.name}]${e.error.message}`
-                );
-                console.log(e.error.frame);
-            }
-        });
-
-        watcher.on("event", ({ result }) => {
-            if (result) {
-                result.close();
-            }
-        });
-
-        server.listen(process.env.PORT || 8999, () => {
-            console.clear();
-            console.log(`Please Connect with Design Express :)`);
-        });
-
-        if (process.platform === "win32") {
-            var rl = require("readline").createInterface({
-                input: process.stdin,
-                output: process.stdout,
-            });
-
-            rl.on("SIGINT", function () {
-                process.emit("SIGINT");
-            });
-        }
-
-        process.on("SIGINT", function () {
-            //graceful shutdown
-            wss.close(() => {
-                server.close(() => {
-                    watcher.close();
-                    console.log("Process terminated");
-                    process.exit();
-                });
-            });
-        });
-    })
-    .catch(e => console.log(e));
+    if (process.env.CI !== 'true') {
+      // Gracefully exit when stdin ends
+      process.stdin.on('end', function () {
+        devServer.close();
+        process.exit();
+      });
+    }
+  })
+  .catch(err => {
+    if (err && err.message) {
+      console.log(err.message);
+    }
+    process.exit(1);
+  });
