@@ -47,7 +47,6 @@ module.exports = function getBabelConfig(_, opts) {
   //   'system',
   // ]);
   const env = process.env.BABEL_ENV || process.env.NODE_ENV;
-  console.log("ttttt",process.env.BABEL_ENV, process.env.NODE_ENV);
   const isEnvDevelopment = env === 'development';
   const isEnvProduction = env === 'production';
   const isEnvTest = env === 'test';
@@ -145,6 +144,10 @@ module.exports = function getBabelConfig(_, opts) {
       },
     ],
     require('babel-plugin-optimize-clsx'),
+    [
+      require('@liradb2000/babel-plugin-transform-globals'),
+      { replace: 'browser' },
+    ],
     // Need the following 3 proposals for all targets in .browserslistrc.
     // With our usage the transpiled loose mode is equivalent to spec mode.
     [
