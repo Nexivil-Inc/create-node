@@ -1,6 +1,6 @@
 {
   "name": "@design-express/node-scripts",
-  "version": "1.0.0-alpha.111500",
+  "version": "1.0.0-alpha.0906154300",
   "description": "Design Express™ Fabrica node development Tools and Scripts",
   "engines": {
     "node": ">=16.0.0"
@@ -33,6 +33,7 @@
     "@babel/preset-react": "^7.14.5",
     "@babel/preset-typescript": "^7.15.0",
     "@babel/register": "^7.15.3",
+    "@liradb2000/babel-plugin-transform-globals": "^1.0.1",
     "@liradb2000/zstd-codec": "^0.1.4",
     "@svgr/webpack": "^5.5.0",
     "babel-eslint": "^10.1.0",
@@ -54,6 +55,7 @@
     "copy-webpack-plugin": "^11.0.0",
     "cross-spawn": "^7.0.3",
     "css-loader": "^6.7.1",
+    "eslint-config-react-app": "^7.0.1",
     "form-data": "^4.0.0",
     "fs-extra": "^9.1.0",
     "immutable": "^4.0.0-rc.12",
@@ -65,6 +67,7 @@
     "postcss-loader": "^7.0.1",
     "postcss-normalize": "^10.0.1",
     "postcss-preset-env": "^7.7.2",
+    "process": "^0.11.10",
     "react-dev-utils": "^12.0.1",
     "resolve-url-loader": "^5.0.0",
     "sass-loader": "^12.2.0",
