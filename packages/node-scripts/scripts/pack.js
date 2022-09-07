@@ -1,6 +1,6 @@
 'use strict';
 const crypto = require('crypto');
-const ZstdCodec = require('zstd-codec/lib/zstd-stream');
+const ZstdCodec = require('@liradb2000/zstd-codec/lib/zstd-stream');
 const chalk = require('chalk');
 const tar = require('tar');
 const fs = require('fs-extra');
