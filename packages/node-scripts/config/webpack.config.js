@@ -1,12 +1,33 @@
-// const path = require('path');
+/**
+ * Based heavily on https://github.com/facebook/create-react-app/blob/
+ *  9802941ff049a28da2682801bc182a29761b71f4/packages/react-scripts/config/webpack.config.js
+ * Original Copyright (c) 2015-present, Facebook, Inc. @facebook (MIT license)
+ */
+
 const paths = require('../config/paths');
+
 const { ProvidePlugin } = require('webpack');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
-// const postcssNormalize = require("postcss-normalize");
-// const CopyPlugin = require("copy-webpack-plugin");
+const CaseSensitivePathsPlugin = require('case-sensitive-paths-webpack-plugin');
 
-// const getCSSModuleLocalIdent = require("./webpack/utils/getCSSModuleIdent");
+const babelRuntimeEntry = require.resolve('babel-preset-react-app');
+const babelRuntimeEntryHelpers = require.resolve(
+  '@babel/runtime/helpers/esm/assertThisInitialized',
+  { paths: [babelRuntimeEntry] }
+);
+const babelRuntimeRegenerator = require.resolve('@babel/runtime/regenerator', {
+  paths: [babelRuntimeEntry],
+});
+
+const ModuleScopePlugin = require('react-dev-utils/ModuleScopePlugin');
+const reactRefreshRuntimeEntry = require.resolve('react-refresh/runtime');
+const ReactRefreshWebpackPlugin = require('@pmmmwh/react-refresh-webpack-plugin');
+const reactRefreshWebpackPluginRuntimeEntry = require.resolve(
+  '@pmmmwh/react-refresh-webpack-plugin'
+);
 const getCSSModuleLocalIdent = require('react-dev-utils/getCSSModuleLocalIdent');
+const packinfo = require(paths.appPackageJson);
+
 const cssRegex = /\.css$/;
 const cssModuleRegex = /\.module\.css$/;
 const sassRegex = /\.(scss|sass)$/;
@@ -101,10 +122,18 @@ module.exports = webpackEnv => {
     return loaders;
   };
 
-  // const shouldUseReactRefresh = process.env.FAST_REFRESH !== "false";
-  // const shouldUseReactRefresh = false;
+  const shouldUseReactRefresh = process.env.FAST_REFRESH !== 'false';
   return {
-    entry: [], //path.resolve(__dirname, rootPath),
+    entry: [
+      isEnvDevelopment &&
+        shouldUseReactRefresh &&
+        require.resolve(
+          '@pmmmwh/react-refresh-webpack-plugin/client/ReactRefreshEntry.js'
+        ),
+      isEnvDevelopment &&
+        shouldUseReactRefresh &&
+        require.resolve('react-refresh/runtime'),
+    ].filter(Boolean),
     experiments: {
       asyncWebAssembly: true,
       syncWebAssembly: true,
@@ -307,7 +336,19 @@ module.exports = webpackEnv => {
         process: 'process/browser',
         Buffer: ['buffer', 'Buffer'],
       }),
-    ],
+      // Experimental hot reloading for React .
+      // https://github.com/facebook/react/tree/main/packages/react-refresh
+      isEnvDevelopment &&
+        shouldUseReactRefresh &&
+        new ReactRefreshWebpackPlugin({
+          overlay: false,
+          library: packinfo.name.replace('@', ''),
+        }),
+      // Watcher doesn't work well if you mistype casing in a path so we use
+      // a plugin that prints an error when you attempt to do this.
+      // See https://github.com/facebook/create-react-app/issues/240
+      isEnvDevelopment && new CaseSensitivePathsPlugin(),
+    ].filter(Boolean),
     resolve: {
       extensions: ['.ts', '.tsx', '.js', '.jsx'],
       // alias: {
@@ -322,6 +363,21 @@ module.exports = webpackEnv => {
         constants: require.resolve('constants-browserify'),
         util: require.resolve('util/'),
       },
+      plugins: [
+        // Prevents users from importing files from outside of src/ (or node_modules/).
+        // This often causes confusion because we only process files within src/ with babel.
+        // To fix this, we prevent you from importing files out of src/ -- if you'd like to,
+        // please link the files into your node_modules/ and let module-resolution kick in.
+        // Make sure your source files are compiled, as they will not be processed in any way.
+        new ModuleScopePlugin(paths.appSrc, [
+          paths.appPackageJson,
+          reactRefreshRuntimeEntry,
+          reactRefreshWebpackPluginRuntimeEntry,
+          babelRuntimeEntry,
+          babelRuntimeEntryHelpers,
+          babelRuntimeRegenerator,
+        ]),
+      ],
     },
     output: {
       // path: path.resolve(dirname, "dist"),
@@ -330,16 +386,20 @@ module.exports = webpackEnv => {
       //   publicPath: `/installedext/${'Test'}/dist/`,
       // library: "react-component-library",
       // libraryTarget: 'global',
-      chunkLoading: 'import',
+      // chunkLoading: 'import',
+      chunkLoading: isEnvDevelopment ? 'jsonp' : 'import',
       importFunctionName: 'fetcher',
+      // chunkFormat: 'module',
       chunkFormat: 'array-push',
       chunkFilename: '[name].[hash:8].js',
-      clean: true,
+      // // Bug: https://github.com/callstack/repack/issues/201#issuecomment-1186682200
+      // clean: true,
       libraryTarget: 'umd',
       library: {
         umdNamedDefine: true,
         type: 'umd',
       },
+      uniqueName: packinfo.name.replace('@', ''),
     },
     externals: [
       {
@@ -375,42 +435,10 @@ module.exports = webpackEnv => {
       /@mui\/styles/,
       /#extension:/i,
     ],
-    // devServer: {
-    //   contentBase: path.resolve(dirname, './public'),
-    // },
-    // optimization: {
-    //   splitChunks: {
-    //     chunks: "all",
-    //   },
-    // },
-    mode: 'production',
+    optimization: {
+      runtimeChunk: 'single',
+    },
+    mode: isEnvProduction ? 'production' : 'development',
     devtool: 'source-map',
   };
 };
-// const path = require("path");
-
-// module.exports = {
-//   entry: "./src/index.ts",
-//   output: {
-//     path: path.resolve("dist"),
-//     filename: "[name].js",
-//     library: "react-component-library",
-//     libraryTarget: "system",
-//   },
-//   resolve: {
-//     extensions: [".ts", ".tsx", ".js"],
-//     alias: {
-//       "@thedesignsystem/button": path.resolve(
-//         __dirname,
-//         "../components/button/src/index"
-//       ),
-//     },
-//   },
-//   module: {
-//     rules: [],
-//   },
-//   externals: {
-//     react: "react",
-//     "react-dom": "react-dom",
-//   },
-// };
