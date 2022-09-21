@@ -1,11 +1,9 @@
-// @remove-on-eject-begin
 /**
- * Copyright (c) 2015-present, Facebook, Inc.
- *
- * This source code is licensed under the MIT license found in the
- * LICENSE file in the root directory of this source tree.
+ * Based heavily on https://github.com/facebook/create-react-app/blob/
+ *  20edab4894b301f6b90dad0f90a2f82c52a7ac66/packages/react-scripts/config/webpackDevServer.config.js
+ * Original Copyright (c) 2015-present, Facebook, Inc. @facebook (MIT license)
  */
-// @remove-on-eject-end
+
 'use strict';
 
 const fs = require('fs');
@@ -17,7 +15,7 @@ const paths = require('./paths');
 const getHttpsConfig = require('./getHttpsConfig');
 
 const host = process.env.HOST || '0.0.0.0';
-const sockHost = process.env.WDS_SOCKET_HOST;
+const sockHost = process.env.WDS_SOCKET_HOST || 'localhost';
 const sockPath = process.env.WDS_SOCKET_PATH; // default: '/ws'
 const sockPort = process.env.WDS_SOCKET_PORT;
 
@@ -78,6 +76,7 @@ module.exports = function (proxy, allowedHost) {
       },
     },
     client: {
+      webSocketTransport: 'ws',
       webSocketURL: {
         // Enable custom sockjs pathname for websocket connection to hot reloading server.
         // Enable custom sockjs hostname, pathname and port for websocket connection
@@ -91,6 +90,7 @@ module.exports = function (proxy, allowedHost) {
         warnings: false,
       },
     },
+    webSocketServer: 'ws',
     devMiddleware: {
       // It is important to tell WebpackDevServer to use the same "publicPath" path as
       // we specified in the webpack config. When homepage is '.', default to serving
@@ -98,7 +98,7 @@ module.exports = function (proxy, allowedHost) {
       // remove last slash so user can land on `/test` instead of `/test/`
       publicPath: paths.publicUrlOrPath.slice(0, -1),
     },
-
+    // liveReload: false,
     https: getHttpsConfig(),
     host,
     historyApiFallback: {
@@ -109,27 +109,31 @@ module.exports = function (proxy, allowedHost) {
     },
     // `proxy` is run between `before` and `after` `webpack-dev-server` hooks
     proxy,
-    onBeforeSetupMiddleware(devServer) {
+    setupMiddlewares: (middlewares, devServer) => {
+      if (!devServer) {
+        throw new Error('webpack-dev-server is not defined');
+      }
+
       // Keep `evalSourceMapMiddleware`
       // middlewares before `redirectServedPath` otherwise will not have any effect
       // This lets us fetch source contents from webpack for the error overlay
-      devServer.app.use(evalSourceMapMiddleware(devServer));
+      middlewares.unshift(evalSourceMapMiddleware(devServer));
 
       if (fs.existsSync(paths.proxySetup)) {
         // This registers user provided middleware for proxy reasons
         require(paths.proxySetup)(devServer.app);
       }
-    },
-    onAfterSetupMiddleware(devServer) {
+
       // Redirect to `PUBLIC_URL` or `homepage` from `package.json` if url not match
-      devServer.app.use(redirectServedPath(paths.publicUrlOrPath));
+      middlewares.push(redirectServedPath(paths.publicUrlOrPath));
 
       // This service worker file is effectively a 'no-op' that will reset any
       // previous service worker registered for the same host:port combination.
       // We do this in development to avoid hitting the production cache if
       // it used the same host and port.
       // https://github.com/facebook/create-react-app/issues/2272#issuecomment-302832432
-      devServer.app.use(noopServiceWorkerMiddleware(paths.publicUrlOrPath));
+      middlewares.push(noopServiceWorkerMiddleware(paths.publicUrlOrPath));
+      return middlewares;
     },
   };
 };
