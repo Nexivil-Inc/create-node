@@ -1,3 +1,9 @@
+/**
+ * Based heavily on https://github.com/mui/material-ui/blob/
+ *  57c91aaf55fc24780daf2b7deceb8aab492975ac/babel.config.js
+ * Original Copyright (c) 2014 Call-Em-All @mui (MIT license)
+ */
+
 const path = require('path');
 
 const validateBoolOption = (name, value, defaultValue) => {
@@ -115,24 +121,7 @@ module.exports = function getBabelConfig(_, opts) {
     ],
     isTypeScriptEnabled && [require('@babel/preset-typescript').default],
   ].filter(Boolean);
-  // [
-  //   require('@babel/preset-env'),
-  //   {
-  //     bugfixes: true,
-  //     browserslistEnv: process.env.BABEL_ENV || process.env.NODE_ENV,
-  //     debug: process.env.MUI_BUILD_VERBOSE === 'true',
-  //     modules: useESModules ? false : 'commonjs',
-  //     shippedProposals: api.env('modern'),
-  //   },
-  // ],
-  // [
-  //   require('@babel/preset-react').default,
-  //   {
-  //     runtime: 'automatic',
-  //   },
-  // ],
-  // require('@babel/preset-typescript').default,
-
+  const shouldUseReactRefresh = process.env.FAST_REFRESH !== 'false';
   const plugins = [
     [
       require('babel-plugin-macros'),
@@ -192,7 +181,10 @@ module.exports = function getBabelConfig(_, opts) {
         mode: 'unsafe-wrap',
       },
     ],
-  ];
+    isEnvDevelopment &&
+      shouldUseReactRefresh &&
+      require.resolve('react-refresh/babel'),
+  ].filter(Boolean);
 
   if (process.env.NODE_ENV === 'production') {
     plugins.push(...productionPlugins);
