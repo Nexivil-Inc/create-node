@@ -23,6 +23,7 @@ process.on('unhandledRejection', err => {
 require('../config/env');
 
 const fs = require('fs');
+const path = require('path');
 const chalk = require('react-dev-utils/chalk');
 const webpack = require('webpack');
 const WebpackDevServer = require('webpack-dev-server');
@@ -75,6 +76,7 @@ if (process.env.HOST) {
 // We require that you explicitly set browsers and do not fall back to
 // browserslist defaults.
 const { checkBrowsers } = require('react-dev-utils/browsersHelper');
+const { HotAcceptPlugin } = require('hot-accept-webpack-plugin');
 checkBrowsers(paths.appPath, isInteractive)
   .then(() => {
     // We attempt to use the default port but if it is busy, we offer the user to
@@ -90,6 +92,14 @@ checkBrowsers(paths.appPath, isInteractive)
     const overrideConfig = require(paths.appWiredWebpack);
 
     const config = overrideConfig(configFactory('development'), 'development');
+
+    //enforce HMR accept
+    config.plugins.push(
+      new HotAcceptPlugin({
+        test: config.entry.map(entry => path.posix.normalize(entry)),
+      })
+    );
+
     const protocol = process.env.HTTPS === 'true' ? 'https' : 'http';
     const appName = require(paths.appPackageJson).name;
 
