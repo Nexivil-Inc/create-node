@@ -11,9 +11,15 @@ process.on('unhandledRejection', err => {
   throw err;
 });
 
-const XNODE_MAGIC_NUMBER = Buffer.from([0x58, 0x4e, 0x30, 0x44, 0x65], 'hex'); //XN0De
-// 220; //name
-// 16; //integrity
+const nameRegex = new RegExp(/^(?:@(?<namespace>\w+)\/)?(?<name>.+)$/);
+const XNODE_MAGIC_NUMBER = Buffer.from([0x58, 0x4e, 0x30, 0x44, 0x65], 'hex');
+// magicNumber; //XN0De
+// 225; //name
+// 32; //integrity
+// 32; //deps;
+// 32; //downloader (origin:80)
+
+// 12; //vi
 
 function recursiveFileList(startPath) {
   const dirInfo = fs.readdirSync(paths.appPath, { withFileTypes: true });
@@ -22,9 +28,10 @@ function recursiveFileList(startPath) {
   }
   return dirInfo;
 }
+const packInfo = require(paths.appPackageJson);
+const { name = '' } = nameRegex.exec(packInfo.name)?.groups ?? {};
 
 function packList() {
-  const packInfo = require(paths.appPackageJson);
   const mergeFiles = new Set(
     packInfo.files.map(filepath => path.join('.', filepath))
   );
@@ -38,9 +45,9 @@ function packList() {
       const ZstdCompressTransform = streams.ZstdCompressTransform;
       const second_compress = new ZstdCompressTransform(22);
       const sink = fs.createWriteStream(
-        path.join(paths.appPath, 'build.xnode')
+        path.join(paths.appPath, `${name}-${packInfo.version}.xnode`)
       );
-      const nameBuffer = Buffer.alloc(241);
+      const nameBuffer = Buffer.alloc(326);
       nameBuffer.fill(XNODE_MAGIC_NUMBER, 0, 5);
       nameBuffer.write(packInfo.name.replace('@', ''), 5, 'utf-8');
       //   nameBuffer.write(packInfo.name, 6, 'utf-8'); // set integrity pos
@@ -68,8 +75,27 @@ function packList() {
   //   return Promise.all(tarEntry);
 }
 
+function injectIntegrity() {
+  const integrity = crypto
+    .createHash('sha256')
+    .update(
+      fs.readFileSync(
+        path.join(paths.appPath, `${name}-${packInfo.version}.xnode`)
+      )
+    )
+    .digest();
+  const fd = fs.openSync(
+    path.join(paths.appPath, `${name}-${packInfo.version}.xnode`),
+    'r+'
+  );
+  fs.writeSync(fd, integrity, 0, 32, 230);
+  fs.closeSync(fd);
+}
+
 function packer() {
-  return packList().then(() => console.log('done'));
+  return packList()
+    .then(injectIntegrity)
+    .then(() => console.log('done'));
   //   return new Promise((resolve, reject) => {
   //     console.log(recursiveFileList());
   //     resolve();
