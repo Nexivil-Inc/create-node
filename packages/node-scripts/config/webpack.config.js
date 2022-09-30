@@ -135,7 +135,7 @@ module.exports = webpackEnv => {
         require.resolve('react-refresh/runtime'),
     ].filter(Boolean),
     experiments: {
-      asyncWebAssembly: true,
+      // asyncWebAssembly: true,
       syncWebAssembly: true,
     },
     module: {
@@ -297,10 +297,10 @@ module.exports = webpackEnv => {
                 'sass-loader'
               ),
             },
-            {
-              test: /\.wasm$/,
-              type: 'asset/resource',
-            },
+            // {
+            //   test: /\.wasm$/,
+            //   type: 'asset/resource',
+            // },
             {
               test: /\.json$/,
               type: 'asset/resource',
@@ -320,6 +320,7 @@ module.exports = webpackEnv => {
                 /\.(js|mjs|jsx|ts|tsx)$/,
                 /\.html$/,
                 /\.json$/,
+                /\.wasm$/,
                 // /\.svg$/,
               ],
               dependency: { not: ['url'] },
@@ -436,7 +437,7 @@ module.exports = webpackEnv => {
       /#extension:/i,
     ],
     optimization: {
-      runtimeChunk: 'single',
+      runtimeChunk: isEnvDevelopment ? 'single' : false,
     },
     mode: isEnvProduction ? 'production' : 'development',
     devtool: 'source-map',
