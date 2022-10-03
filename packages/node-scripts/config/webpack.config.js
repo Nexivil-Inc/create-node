@@ -395,10 +395,10 @@ module.exports = webpackEnv => {
       chunkFilename: '[name].[hash:8].js',
       // // Bug: https://github.com/callstack/repack/issues/201#issuecomment-1186682200
       // clean: true,
-      libraryTarget: 'umd',
+      libraryTarget: 'amd',
       library: {
         umdNamedDefine: true,
-        type: 'umd',
+        type: 'amd',
       },
       uniqueName: packinfo.name.replace('@', ''),
     },
