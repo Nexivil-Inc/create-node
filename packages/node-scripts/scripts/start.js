@@ -77,6 +77,7 @@ if (process.env.HOST) {
 // browserslist defaults.
 const { checkBrowsers } = require('react-dev-utils/browsersHelper');
 const { HotAcceptPlugin } = require('hot-accept-webpack-plugin');
+const VirtualModulesPlugin = require('webpack-virtual-modules');
 checkBrowsers(paths.appPath, isInteractive)
   .then(() => {
     // We attempt to use the default port but if it is busy, we offer the user to
@@ -88,12 +89,31 @@ checkBrowsers(paths.appPath, isInteractive)
       // We have not found a port.
       return;
     }
+    const appName = require(paths.appPackageJson).name;
 
     const overrideConfig = require(paths.appWiredWebpack);
 
     const config = overrideConfig(configFactory('development'), 'development');
-
+    config.entry.pop();
+    config.entry.push(path.join(paths.appSrc, 'main.js'));
+    config.output.publicPath = `http://localhost:${port}/${appName.replace(
+      '@',
+      ''
+    )}/`;
     //enforce HMR accept
+    config.plugins.push(
+      new VirtualModulesPlugin({
+        [path.join(paths.appSrc, 'main.js')]: `
+          import LiteGraph from "litegraph.js";
+          import * as userMods from "./index";
+
+          for (let key in userMods) {
+            let t = userMods[key];
+            LiteGraph.registerNodeType(t.path ?? \`testmodule/\${key}\`, t);
+          }
+          `,
+      })
+    );
     config.plugins.push(
       new HotAcceptPlugin({
         test: config.entry.map(entry => path.posix.normalize(entry)),
@@ -101,7 +121,6 @@ checkBrowsers(paths.appPath, isInteractive)
     );
 
     const protocol = process.env.HTTPS === 'true' ? 'https' : 'http';
-    const appName = require(paths.appPackageJson).name;
 
     const useTypeScript = fs.existsSync(paths.appTsConfig);
     const urls = prepareUrls(

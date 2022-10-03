@@ -133,6 +133,7 @@ module.exports = webpackEnv => {
       isEnvDevelopment &&
         shouldUseReactRefresh &&
         require.resolve('react-refresh/runtime'),
+      paths.appSrc,
     ].filter(Boolean),
     experiments: {
       // asyncWebAssembly: true,
