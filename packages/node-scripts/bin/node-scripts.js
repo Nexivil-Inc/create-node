@@ -21,6 +21,7 @@ const args = process.argv.slice(2);
 
 const scriptIndex = args.findIndex(
   x =>
+    x === 'init' ||
     x === 'start' ||
     x === 'build' ||
     x === 'pack' ||
@@ -31,7 +32,7 @@ const scriptIndex = args.findIndex(
 const script = scriptIndex === -1 ? args[0] : args[scriptIndex];
 const nodeArgs = scriptIndex > 0 ? args.slice(0, scriptIndex) : [];
 
-if (['start', 'build', 'pack', 'publish', 'docs', 'setUser'].includes(script)) {
+if (['init','start', 'build', 'pack', 'publish', 'docs', 'setUser'].includes(script)) {
   const result = spawn.sync(
     process.execPath,
     nodeArgs
