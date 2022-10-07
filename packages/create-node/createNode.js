@@ -133,8 +133,9 @@ function createApp(name, verbose, version) {
     name: appName,
     version: "0.1.0",
     private: false,
-    type: "node",
-    pre_release: false,
+    description: "",
+    license: "MIT",
+    files: ["build"],
   };
   fs.writeFileSync(
     path.join(root, "package.json"),
@@ -309,7 +310,7 @@ function run(root, appName, version, verbose, originalDirectory) {
 }
 
 function getInstallPackage(version, originalDirectory) {
-  let packageToInstall = "@design-express/node-scripts";
+  let packageToInstall = "@design-express/node-scripts@beta";
   const validSemver = semver.valid(version);
   if (validSemver) {
     packageToInstall += `@${validSemver}`;
@@ -359,7 +360,7 @@ function getInstallPackage(version, originalDirectory) {
 }
 
 function getTemplateInstallPackage(template, originalDirectory) {
-  let templateToInstall = "@design-express/node-template";
+  let templateToInstall = "@design-express/node-template@beta";
   if (template) {
     if (template.match(/^file:/)) {
       templateToInstall = `file:${path.resolve(
