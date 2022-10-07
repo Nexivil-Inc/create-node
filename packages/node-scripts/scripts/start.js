@@ -109,7 +109,7 @@ checkBrowsers(paths.appPath, isInteractive)
 
           for (let key in userMods) {
             let t = userMods[key];
-            LiteGraph.registerNodeType(t.path ?? \`testmodule/\${key}\`, t);
+            LiteGraph.registerNodeType(\`\${t.path??"testmodule"}/\${t.title??key}\`, t);
           }
           `,
       })
