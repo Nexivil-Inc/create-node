@@ -185,6 +185,7 @@ module.exports = function (
             pack: "node-scripts pack",
             publish: "node-scripts publish",
             docs: "node-scripts docs",
+            setuser:"node-scripts setUser"
             // test: "node-scripts test",
             // eject: "node-scripts eject",
         },
