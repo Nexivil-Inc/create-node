@@ -79,7 +79,7 @@ async function publisher() {
   form.append('version', version);
   form.append('integrity', integrity);
   form.append('release_type', 'NODE');
-  form.append('x_version', '0');
+  form.append('x_version', '1');
   if (!readmeBin && (readmeBin.length ?? 0) > 0) {
     form.append('read_me', readmeBin, {
       filename: `${name}-${version}-readme.md`,
