@@ -1,12 +1,12 @@
 {
   "name": "@design-express/node-template",
-  "version": "0.0.1",
+  "version": "1.0.0-alpha.1007135500",
   "keywords": [
     "designexpress",
     "design Express",
     "nexivil"
   ],
-  "description": "The base template for Design Express node.",
+  "description": "esign Express™ Fabrica node template.",
   "author": "liradb2000",
   "license": "MIT",
   "engines": {
