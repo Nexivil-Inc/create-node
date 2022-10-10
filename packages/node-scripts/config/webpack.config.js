@@ -5,6 +5,7 @@
  */
 
 const paths = require('../config/paths');
+const modules = require('./modules');
 
 const { ProvidePlugin } = require('webpack');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
@@ -335,8 +336,8 @@ module.exports = webpackEnv => {
     },
     plugins: [
       new ProvidePlugin({
-        process: 'process/browser',
-        Buffer: ['buffer', 'Buffer'],
+        process: require.resolve('process/browser'),
+        Buffer: [require.resolve('buffer'), require.resolve('Buffer')],
       }),
       // Experimental hot reloading for React .
       // https://github.com/facebook/react/tree/main/packages/react-refresh
@@ -352,6 +353,13 @@ module.exports = webpackEnv => {
       isEnvDevelopment && new CaseSensitivePathsPlugin(),
     ].filter(Boolean),
     resolve: {
+      // This allows you to set a fallback for where webpack should look for modules.
+      // We placed these paths second because we want `node_modules` to "win"
+      // if there are any conflicts. This matches Node resolution mechanism.
+      // https://github.com/facebook/create-react-app/issues/253
+      modules: ['node_modules', paths.appNodeModules].concat(
+        modules.additionalModulePaths || []
+      ),
       extensions: ['.ts', '.tsx', '.js', '.jsx'],
       // alias: {
       //     "#extension:": path.resolve(dirname, "./node_modules/"),
@@ -396,10 +404,10 @@ module.exports = webpackEnv => {
       chunkFilename: '[name].[hash:8].js',
       // // Bug: https://github.com/callstack/repack/issues/201#issuecomment-1186682200
       // clean: true,
-      libraryTarget: 'amd',
+      libraryTarget: isEnvDevelopment ? 'window' : 'amd',
       library: {
         umdNamedDefine: true,
-        type: 'amd',
+        type: isEnvDevelopment ? 'window' : 'amd',
       },
       uniqueName: packinfo.name.replace('@', ''),
     },
