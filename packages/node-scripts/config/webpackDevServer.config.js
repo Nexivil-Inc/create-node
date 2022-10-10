@@ -89,6 +89,7 @@ module.exports = function (proxy, allowedHost) {
         errors: true,
         warnings: false,
       },
+      reconnect: false,
     },
     webSocketServer: 'ws',
     devMiddleware: {
@@ -109,6 +110,7 @@ module.exports = function (proxy, allowedHost) {
     },
     // `proxy` is run between `before` and `after` `webpack-dev-server` hooks
     proxy,
+    hot: 'only',
     setupMiddlewares: (middlewares, devServer) => {
       if (!devServer) {
         throw new Error('webpack-dev-server is not defined');
