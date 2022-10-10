@@ -449,6 +449,6 @@ module.exports = webpackEnv => {
       runtimeChunk: isEnvDevelopment ? 'single' : false,
     },
     mode: isEnvProduction ? 'production' : 'development',
-    devtool: 'source-map',
+    devtool: 'eval-source-map',
   };
 };

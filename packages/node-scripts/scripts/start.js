@@ -99,10 +99,14 @@ checkBrowsers(paths.appPath, isInteractive)
       '@',
       ''
     )}/`;
-    //enforce HMR accept
-    config.plugins.push(
-      new VirtualModulesPlugin({
-        [path.join(paths.appSrc, 'main.js')]: `
+    (config.output.devtoolModuleFilenameTemplate = `webpack://${appName.replace(
+      '@',
+      ''
+    )}/[resource-path]`),
+      //enforce HMR accept
+      config.plugins.push(
+        new VirtualModulesPlugin({
+          [path.join(paths.appSrc, 'main.js')]: `
         import LiteGraph from "litegraph.js";
         import * as m from "./index";
         for (let key in m) {
@@ -122,8 +126,18 @@ checkBrowsers(paths.appPath, isInteractive)
         
              
           `,
-      })
-    );
+        })
+      );
+
+    // config.plugins.push(
+    //   new webpack.EvalSourceMapDevToolPlugin({
+    //     exclude: /node_modules/,
+    //     // moduleFilenameTemplate :
+    //     protocol :
+    //     // publicPath: `/pkg/sourcemap/${port}/`,
+    //     // filename: '[file].map[query]',
+    //   })
+    // );
 
     const protocol = process.env.HTTPS === 'true' ? 'https' : 'http';
 
