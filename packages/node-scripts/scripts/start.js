@@ -76,7 +76,6 @@ if (process.env.HOST) {
 // We require that you explicitly set browsers and do not fall back to
 // browserslist defaults.
 const { checkBrowsers } = require('react-dev-utils/browsersHelper');
-const { HotAcceptPlugin } = require('hot-accept-webpack-plugin');
 const VirtualModulesPlugin = require('webpack-virtual-modules');
 checkBrowsers(paths.appPath, isInteractive)
   .then(() => {
@@ -104,19 +103,25 @@ checkBrowsers(paths.appPath, isInteractive)
     config.plugins.push(
       new VirtualModulesPlugin({
         [path.join(paths.appSrc, 'main.js')]: `
-          import LiteGraph from "litegraph.js";
-          import * as userMods from "./index";
-
-          for (let key in userMods) {
-            let t = userMods[key];
-            LiteGraph.registerNodeType(\`\${t.path??"testmodule"}/\${t.title??key}\`, t);
-          }
+        import LiteGraph from "litegraph.js";
+        import * as m from "./index";
+        for (let key in m) {
+          let t = m[key];
+            LiteGraph.registerNodeType(\`\${t.path ?? "testmodule"}/\${t.title ?? key}\`, t);
+        }   
+        if (module.hot) {
+          module.hot.accept("./index",function() {
+            for (let key in m) {
+              let t = m[key];
+                LiteGraph.registerNodeType(\`\${t.path ?? "testmodule"}/\${t.title ?? key}\`, t);
+            }   
+          },function (err, md) {
+            console.log("EROROR");
+          });
+        }
+        
+             
           `,
-      })
-    );
-    config.plugins.push(
-      new HotAcceptPlugin({
-        test: config.entry.map(entry => path.posix.normalize(entry)),
       })
     );
 
