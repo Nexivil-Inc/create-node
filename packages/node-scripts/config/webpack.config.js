@@ -414,7 +414,8 @@ module.exports = webpackEnv => {
     externals: [
       {
         react: 'react',
-        'react-dom': 'react-dom',
+        React: 'react',
+        // 'react-dom': 'react-dom',
         'react/jsx-runtime': 'react/jsx-runtime',
         'react/jsx-dev-runtime': 'react/jsx-dev-runtime',
         path: 'path',
