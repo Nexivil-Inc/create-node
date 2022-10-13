@@ -1,3 +1,4 @@
+/* eslint-disable no-extra-boolean-cast */
 "use strict";
 
 process.on("unhandledRejection", err => {
@@ -20,6 +21,7 @@ const { appPath } = require("../config/paths");
 const emailRegx = new RegExp(
     /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
 );
+const nameRegex = new RegExp(/^(?:@(?<scope>\w+)\/)?(?<name>.+)$/);
 
 console.log("Creating an optimized production build...");
 
@@ -28,6 +30,10 @@ builder()
     .then(async ([bin, info]) => {
         // Publish to server(design-express)
         const { name, version, author, readme = null } = info;
+
+        const { scope: _scope, name: _name } =
+            nameRegex.exec(name)?.groups ?? {};
+
         let credential = null;
         let readmeBin = null;
 
@@ -93,6 +99,9 @@ builder()
             contentType: "nexivil/xnode",
             knownLength: bin.length,
         });
+        form.append("scope", _scope);
+        form.append("name", _name);
+        form.append("release_type", "NODE");
 
         const httpsOptions = {
             method: "POST",
