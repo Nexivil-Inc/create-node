@@ -99,14 +99,14 @@ checkBrowsers(paths.appPath, isInteractive)
       '@',
       ''
     )}/`;
-    (config.output.devtoolModuleFilenameTemplate = `webpack://${appName.replace(
+    config.output.devtoolModuleFilenameTemplate = `webpack://${appName.replace(
       '@',
       ''
-    )}/[resource-path]`),
-      //enforce HMR accept
-      config.plugins.push(
-        new VirtualModulesPlugin({
-          [path.join(paths.appSrc, 'main.js')]: `
+    )}/[resource-path]`;
+    //enforce HMR accept
+    config.plugins.push(
+      new VirtualModulesPlugin({
+        [path.join(paths.appSrc, 'main.js')]: `
         import LiteGraph from "litegraph.js";
         import * as m from "./index";
         for (let key in m) {
@@ -123,11 +123,10 @@ checkBrowsers(paths.appPath, isInteractive)
             console.log("EROROR");
           });
         }
-        
-             
           `,
-        })
-      );
+      })
+    );
+    config.devtool= 'eval-source-map',
 
     // config.plugins.push(
     //   new webpack.EvalSourceMapDevToolPlugin({

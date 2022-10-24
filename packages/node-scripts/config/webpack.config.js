@@ -450,6 +450,6 @@ module.exports = webpackEnv => {
       runtimeChunk: isEnvDevelopment ? 'single' : false,
     },
     mode: isEnvProduction ? 'production' : 'development',
-    devtool: 'eval-source-map',
+    devtool: 'source-map',
   };
 };
