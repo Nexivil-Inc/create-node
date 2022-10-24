@@ -126,7 +126,7 @@ checkBrowsers(paths.appPath, isInteractive)
           `,
       })
     );
-    config.devtool= 'eval-source-map',
+    config.devtool = 'eval-source-map';
 
     // config.plugins.push(
     //   new webpack.EvalSourceMapDevToolPlugin({
