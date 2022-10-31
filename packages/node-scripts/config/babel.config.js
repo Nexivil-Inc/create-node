@@ -104,6 +104,10 @@ module.exports = function getBabelConfig(_, opts) {
         corejs: 3,
         // Exclude transforms that make all code slower
         exclude: ['transform-typeof-symbol'],
+        modules: false,
+        // ignoreBrowserslistConfig: true,
+        // targets: '>1%, not dead, not op_mini all',
+        // browserslistEnv: 'last 1 chrome version',
       },
     ],
     [
@@ -133,6 +137,7 @@ module.exports = function getBabelConfig(_, opts) {
       },
     ],
     require('babel-plugin-optimize-clsx'),
+    require('babel-plugin-no-side-effect-class-properties'),
     [
       require('@liradb2000/babel-plugin-transform-globals'),
       { replace: 'browser' },
@@ -153,6 +158,10 @@ module.exports = function getBabelConfig(_, opts) {
     ],
     [
       require('@babel/plugin-proposal-object-rest-spread').default,
+      { loose: true },
+    ],
+    [
+      require('@babel/plugin-proposal-nullish-coalescing-operator').default,
       { loose: true },
     ],
     [
@@ -184,6 +193,7 @@ module.exports = function getBabelConfig(_, opts) {
     isEnvDevelopment &&
       shouldUseReactRefresh &&
       require.resolve('react-refresh/babel'),
+    require('babel-plugin-annotate-pure-calls').default,
   ].filter(Boolean);
 
   if (process.env.NODE_ENV === 'production') {

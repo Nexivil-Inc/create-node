@@ -29,6 +29,8 @@ const chalk = require('react-dev-utils/chalk');
 const fs = require('fs-extra');
 const bfj = require('bfj');
 const webpack = require('webpack');
+// const VirtualModulesPlugin = require('webpack-virtual-modules');
+
 const configFactory = require('../config/webpack.config');
 const paths = require('../config/paths');
 // const deepmerge = require('lodash/merge')
@@ -147,6 +149,15 @@ checkBrowsers(paths.appPath, isInteractive)
 // Create the production build and print the deployment instructions.
 function build(previousFileSizes) {
   console.log('Creating an optimized production build...');
+  // config.entry.pop();
+  // config.entry.push(path.join(paths.appSrc, 'main.js'));
+  // config.plugins.push(
+  //   new VirtualModulesPlugin({
+  //     [path.join(paths.appSrc, 'main.js')]: `
+  //     import("./index.js").then(m=>)
+  //       `,
+  //   })
+  // );
   //enforce public path
   config.output.publicPath = path.posix.join(
     '/pkg/file',
