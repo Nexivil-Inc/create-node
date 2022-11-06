@@ -109,15 +109,30 @@ checkBrowsers(paths.appPath, isInteractive)
         [path.join(paths.appSrc, 'main.js')]: `
         import LiteGraph from "litegraph.js";
         import * as m from "./index";
+
+        // document.getElementById("vdom").addEventListener("DOMNodeRemoved", window.__DESIGN_EXPRESS__DO_NOT_USE_THIS__.reboot, {once: true,passive: true,capture: false});
+
+        const nodeSymbol= Symbol.for("fabrica.node");
+        
+        function _extendNodeClassGenerator(t){
+          return class extendNodeClass extends t {
+            constructor(){
+              super(...arguments);
+              this.$$develop = nodeSymbol;
+            }
+          }
+        }
+
+        
         for (let key in m) {
-          let t = m[key];
-            LiteGraph.registerNodeType(\`\${t.path ?? "testmodule"}/\${t.title ?? key}\`, t);
+          let t = m[key];          
+          LiteGraph.registerNodeType(\`\${t.path ?? "testmodule"}/\${t.title ?? key}\`, _extendNodeClassGenerator(t));
         }   
         if (module.hot) {
           module.hot.accept("./index",function() {
             for (let key in m) {
               let t = m[key];
-                LiteGraph.registerNodeType(\`\${t.path ?? "testmodule"}/\${t.title ?? key}\`, t);
+              LiteGraph.registerNodeType(\`\${t.path ?? "testmodule"}/\${t.title ?? key}\`, _extendNodeClassGenerator(t));
             }   
           },function (err, md) {
             console.log("EROROR");
