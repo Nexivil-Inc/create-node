@@ -366,8 +366,8 @@ module.exports = webpackEnv => {
     },
     plugins: [
       new ProvidePlugin({
-        process: require.resolve('process/browser'),
-        Buffer: [require.resolve('buffer'), require.resolve('Buffer')],
+        process: 'process/browser',
+        Buffer: ['buffer', 'Buffer'],
       }),
       // Experimental hot reloading for React .
       // https://github.com/facebook/react/tree/main/packages/react-refresh
