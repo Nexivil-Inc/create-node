@@ -7,11 +7,12 @@
 const paths = require('../config/paths');
 const modules = require('./modules');
 
-const { ProvidePlugin } = require('webpack');
+const { ProvidePlugin, IgnorePlugin } = require('webpack');
 const TerserPlugin = require('terser-webpack-plugin');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const CssMinimizerPlugin = require('css-minimizer-webpack-plugin');
 const CaseSensitivePathsPlugin = require('case-sensitive-paths-webpack-plugin');
+const { WebpackManifestPlugin } = require('webpack-manifest-plugin');
 
 const babelRuntimeEntry = require.resolve('babel-preset-react-app');
 const babelRuntimeEntryHelpers = require.resolve(
@@ -29,6 +30,7 @@ const reactRefreshWebpackPluginRuntimeEntry = require.resolve(
   '@pmmmwh/react-refresh-webpack-plugin'
 );
 const getCSSModuleLocalIdent = require('react-dev-utils/getCSSModuleLocalIdent');
+const getCacheIdentifier = require('react-dev-utils/getCacheIdentifier');
 const packinfo = require(paths.appPackageJson);
 
 const cssRegex = /\.css$/;
@@ -37,6 +39,9 @@ const sassRegex = /\.(scss|sass)$/;
 const sassModuleRegex = /\.module\.(scss|sass)$/;
 
 const shouldUseSourceMap = process.env.GENERATE_SOURCEMAP !== 'false';
+const imageInlineSizeLimit = parseInt(
+  process.env.IMAGE_INLINE_SIZE_LIMIT || '10000'
+);
 
 module.exports = webpackEnv => {
   //   const paths = { appSrc: dirname, publicUrlOrPath: '/' };
@@ -147,95 +152,88 @@ module.exports = webpackEnv => {
     module: {
       strictExportPresence: true,
       rules: [
-        { test: /\.[cm]?(js|tsx?)$/, parser: { requireEnsure: false } },
+        shouldUseSourceMap && {
+          enforce: 'pre',
+          exclude: /@babel(?:\/|\\{1,2})runtime/,
+          test: /\.(js|mjs|jsx|ts|tsx|css)$/,
+          loader: require.resolve('source-map-loader'),
+        },
         {
           oneOf: [
             {
-              test: /\.(ts|tsx)$/,
-              use: [
-                {
-                  loader: require.resolve('ts-loader'),
-                },
-              ],
-            },
-            {
-              test: /\.(js|mjs|jsx|ts|tsx)$/,
-              exclude: [/node_modules/, /@babel[\\|/]runtime/], // Fix a Windows issue.
-              use: {
-                loader: require.resolve('babel-loader'),
-                options: {
-                  //   babelrc: false,
-                  //   configFile: false,
-                  presets: [require.resolve('./babel.config')],
+              test: [/\.avif$/],
+              type: 'asset',
+              mimetype: 'image/avif',
+              parser: {
+                dataUrlCondition: {
+                  maxSize: imageInlineSizeLimit,
                 },
               },
             },
-            {
-              test: /\.svg?$/,
-              oneOf: [
-                {
-                  use: [
-                    {
-                      loader: require.resolve('@svgr/webpack'),
-                      options: {
-                        prettier: false,
-                        svgo: true,
-                        svgoConfig: {
-                          plugins: [
-                            {
-                              removeViewBox: false,
-                            },
-                          ],
-                        },
-                        titleProp: true,
-                      },
-                    },
-                    require.resolve('svg-inline-loader'),
-                  ],
-                  issuer: {
-                    and: [/\.(ts|tsx|js|jsx|md|mdx)$/],
-                  },
-                },
-                {
-                  type: 'asset',
-                  parser: {
-                    dataUrlCondition: {
-                      maxSize: 10 * 1024, // 4kb
-                    },
-                  },
-                  generator: {
-                    filename: 'static/media/[name].[hash:8].[ext]',
-                  },
-                },
-              ],
-            },
-            // {
-            //   test: /\.svg$/,
-            //   use: ["@svgr/webpack", "svg-inline-loader"],
-            // },
-            // {
-            //   test: /\.(s)?css$/i,
-            //   use: ["style-loader", "css-loader", "sass-loader"],
-            // },
             {
               test: [/\.bmp$/, /\.gif$/, /\.jpe?g$/, /\.png$/],
               type: 'asset',
               parser: {
                 dataUrlCondition: {
-                  maxSize: 10 * 1024, // 4kb
+                  maxSize: imageInlineSizeLimit,
                 },
               },
-              generator: {
-                filename: 'static/media/[name].[hash:8].[ext]',
+              // generator: {
+              //   filename: 'static/media/[name].[hash].[ext]',
+              // },
+            },
+            {
+              test: /\.svg$/,
+              use: [
+                {
+                  loader: require.resolve('@svgr/webpack'),
+                  options: {
+                    prettier: false,
+                    svgo: false,
+                    svgoConfig: {
+                      plugins: [{ removeViewBox: false }],
+                    },
+                    titleProp: true,
+                    ref: true,
+                  },
+                },
+                {
+                  loader: require.resolve('file-loader'),
+                  options: {
+                    name: 'static/media/[name].[hash].[ext]',
+                  },
+                },
+              ],
+              issuer: {
+                and: [/\.(ts|tsx|js|jsx|md|mdx)$/],
               },
             },
-            // "postcss" loader applies autoprefixer to our CSS.
-            // "css" loader resolves paths in CSS and adds assets as dependencies.
-            // "style" loader turns CSS into JS modules that inject <style> tags.
-            // In production, we use MiniCSSExtractPlugin to extract that CSS
-            // to a file, but in development "style" loader enables hot editing
-            // of CSS.
-            // By default we support CSS Modules with the extension .module.css
+            {
+              test: /\.(js|mjs)$/,
+              exclude: /@babel(?:\/|\\{1,2})runtime/,
+              loader: require.resolve('babel-loader'),
+              options: {
+                babelrc: false,
+                configFile: false,
+                compact: false,
+                presets: [require.resolve('./babel.config')],
+                cacheDirectory: true,
+                cacheCompression: false,
+                cacheIdentifier: getCacheIdentifier(
+                  isEnvProduction
+                    ? 'production'
+                    : isEnvDevelopment && 'development',
+                  [
+                    'babel-plugin-named-asset-import',
+                    'babel-preset-react-app',
+                    'react-dev-utils',
+                    'react-scripts',
+                  ]
+                ),
+                sourceMaps: shouldUseSourceMap,
+                inputSourceMap: shouldUseSourceMap,
+              },
+            },
             {
               test: cssRegex,
               exclude: cssModuleRegex,
@@ -244,15 +242,12 @@ module.exports = webpackEnv => {
                 sourceMap: isEnvProduction
                   ? shouldUseSourceMap
                   : isEnvDevelopment,
+                modules: {
+                  mode: 'icss',
+                },
               }),
-              // Don't consider CSS imports dead code even if the
-              // containing package claims to have no side effects.
-              // Remove this when webpack adds a warning or an error for this.
-              // See https://github.com/webpack/webpack/issues/6571
               sideEffects: true,
             },
-            // Adds support for CSS Modules (https://github.com/css-modules/css-modules)
-            // using the extension .module.css[0,1,2]
             {
               test: cssModuleRegex,
               use: getStyleLoaders({
@@ -261,13 +256,11 @@ module.exports = webpackEnv => {
                   ? shouldUseSourceMap
                   : isEnvDevelopment,
                 modules: {
+                  mode: 'local',
                   getLocalIdent: getCSSModuleLocalIdent,
                 },
               }),
             },
-            // Opt-in support for SASS (using .scss or .sass extensions).
-            // By default we support SASS Modules with the
-            // extensions .module.scss or .module.sass
             {
               test: sassRegex,
               exclude: sassModuleRegex,
@@ -277,17 +270,14 @@ module.exports = webpackEnv => {
                   sourceMap: isEnvProduction
                     ? shouldUseSourceMap
                     : isEnvDevelopment,
+                  modules: {
+                    mode: 'icss',
+                  },
                 },
                 'sass-loader'
               ),
-              // Don't consider CSS imports dead code even if the
-              // containing package claims to have no side effects.
-              // Remove this when webpack adds a warning or an error for this.
-              // See https://github.com/webpack/webpack/issues/6571
               sideEffects: true,
             },
-            // Adds support for CSS Modules, but using SASS
-            // using the extension .module.scss or .module.sass
             {
               test: sassModuleRegex,
               use: getStyleLoaders(
@@ -297,19 +287,12 @@ module.exports = webpackEnv => {
                     ? shouldUseSourceMap
                     : isEnvDevelopment,
                   modules: {
+                    mode: 'local',
                     getLocalIdent: getCSSModuleLocalIdent,
                   },
                 },
                 'sass-loader'
               ),
-            },
-            // {
-            //   test: /\.wasm$/,
-            //   type: 'asset/resource',
-            // },
-            {
-              test: /\.json$/,
-              type: 'asset/resource',
             },
             // "file" loader makes sure those assets get served by WebpackDevServer.
             // When you `import` an asset, you get its (virtual) filename.
@@ -317,23 +300,66 @@ module.exports = webpackEnv => {
             // This loader doesn't use a "test" so it will catch all modules
             // that fall through the other loaders.
             {
-              type: 'asset/resource',
               // Exclude `js` files to keep "css" loader working as it injects
               // its runtime that would otherwise be processed through "file" loader.
               // Also exclude `html` and `json` extensions so they get processed
               // by webpacks internal loaders.
               exclude: [
+                /^$/,
                 /\.(js|mjs|jsx|ts|tsx)$/,
                 /\.html$/,
                 /\.json$/,
                 /\.wasm$/,
-                // /\.svg$/,
               ],
+              type: 'asset/resource',
               dependency: { not: ['url'] },
-              generator: {
-                filename: 'static/media/[name].[hash:8].[ext]',
-              },
+              // generator: {
+              //   filename: 'static/media/[name].[hash].[ext]',
+              // },
             },
+            // ** STOP ** Are you adding a new loader?
+            // Make sure to add the new loader(s) before the "file" loader.
+
+            /** Legacy SVG load module */
+            // {
+            //   test: /\.svg?$/,
+            //   oneOf: [
+            //     {
+            //       use: [
+            //         {
+            //           loader: require.resolve('@svgr/webpack'),
+            //           options: {
+            //             prettier: false,
+            //             svgo: true,
+            //             svgoConfig: {
+            //               plugins: [
+            //                 {
+            //                   removeViewBox: false,
+            //                 },
+            //               ],
+            //             },
+            //             titleProp: true,
+            //           },
+            //         },
+            //         require.resolve('svg-inline-loader'),
+            //       ],
+            //       issuer: {
+            //         and: [/\.(ts|tsx|js|jsx|md|mdx)$/],
+            //       },
+            //     },
+            //     {
+            //       type: 'asset',
+            //       parser: {
+            //         dataUrlCondition: {
+            //           maxSize: 10 * 1024, // 4kb
+            //         },
+            //       },
+            //       generator: {
+            //         filename: 'static/media/[name].[hash:8].[ext]',
+            //       },
+            //     },
+            //   ],
+            // },
           ],
         },
       ],
@@ -355,7 +381,40 @@ module.exports = webpackEnv => {
       // a plugin that prints an error when you attempt to do this.
       // See https://github.com/facebook/create-react-app/issues/240
       isEnvDevelopment && new CaseSensitivePathsPlugin(),
-      isEnvProduction && new MiniCssExtractPlugin(),
+      isEnvProduction && new MiniCssExtractPlugin(), // Generate an asset manifest file with the following content:
+      // - "files" key: Mapping of all asset filenames to their corresponding
+      //   output file so that tools can pick it up without having to parse
+      //   `index.html`
+      // - "entrypoints" key: Array of files which are included in `index.html`,
+      //   can be used to reconstruct the HTML if necessary
+      new WebpackManifestPlugin({
+        fileName: 'asset-manifest.json',
+        publicPath: paths.publicUrlOrPath,
+        generate: (seed, files, entrypoints) => {
+          const manifestFiles = files.reduce((manifest, file) => {
+            manifest[file.name] = file.path;
+            return manifest;
+          }, seed);
+          const entrypointFiles = entrypoints.main.filter(
+            fileName => !fileName.endsWith('.map')
+          );
+
+          return {
+            version: '1.0.0',
+            files: manifestFiles,
+            entrypoints: entrypointFiles,
+          };
+        },
+      }),
+      // Moment.js is an extremely popular library that bundles large locale files
+      // by default due to how webpack interprets its code. This is a practical
+      // solution that requires the user to opt into importing specific locales.
+      // https://github.com/jmblog/how-to-optimize-momentjs-with-webpack
+      // You can remove this if you don't use Moment.js:
+      new IgnorePlugin({
+        resourceRegExp: /^\.\/locale$/,
+        contextRegExp: /moment$/,
+      }),
     ].filter(Boolean),
     resolve: {
       // This allows you to set a fallback for where webpack should look for modules.
@@ -372,6 +431,8 @@ module.exports = webpackEnv => {
       //     TYPEs: path.resolve(__dirname, "./type.js"),
       // },
       fallback: {
+        fs: false,
+        stream: require.resolve('stream-browserify'),
         buffer: require.resolve('buffer/'),
         vm: require.resolve('vm-browserify'),
         url: require.resolve('url/'),
@@ -406,7 +467,9 @@ module.exports = webpackEnv => {
       importFunctionName: 'fetcher',
       // chunkFormat: 'module',
       chunkFormat: 'array-push',
-      chunkFilename: '[name].[hash:8].js',
+      chunkFilename: isEnvProduction
+        ? 'static/js/[name].[contenthash:8].chunk.js'
+        : isEnvDevelopment && 'static/js/[name].chunk.js',
       // // Bug: https://github.com/callstack/repack/issues/201#issuecomment-1186682200
       // clean: true,
       libraryTarget: isEnvDevelopment ? 'window' : 'amd',
@@ -415,6 +478,7 @@ module.exports = webpackEnv => {
         type: isEnvDevelopment ? 'window' : 'amd',
       },
       uniqueName: packinfo.name.replace('@', ''),
+      assetModuleFilename: 'static/media/[name].[hash][ext]',
     },
     externals: [
       {
