@@ -210,7 +210,7 @@ module.exports = webpackEnv => {
             },
             {
               test: /\.(js|mjs)$/,
-              exclude: /@babel(?:\/|\\{1,2})runtime/,
+              exclude: [/node_modules/, /@babel(?:\/|\\{1,2})runtime/],
               loader: require.resolve('babel-loader'),
               options: {
                 babelrc: false,
