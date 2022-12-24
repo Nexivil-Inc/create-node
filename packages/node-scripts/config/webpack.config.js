@@ -517,7 +517,6 @@ module.exports = webpackEnv => {
         'system/ui': 'system/ui',
       },
       /@design-express\//,
-      /@mui\/styles/,
       /#extension:/i,
     ],
     optimization: {
