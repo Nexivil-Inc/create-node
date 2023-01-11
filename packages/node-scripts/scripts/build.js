@@ -64,6 +64,7 @@ const overrideConfig = require(paths.appWiredWebpack);
 const config = overrideConfig(configFactory('production'), 'production');
 // const config = overrideConfig(configFactory('development'), 'development');
 const appPackage = require(paths.appPackageJson);
+const getFileList = require('../utils/getFiles');
 // We require that you explicitly set browsers and do not fall back to
 // browserslist defaults.
 const { checkBrowsers } = require('react-dev-utils/browsersHelper');
@@ -150,7 +151,9 @@ checkBrowsers(paths.appPath, isInteractive)
 function build(previousFileSizes) {
   console.log('Creating an optimized production build...');
   // config.entry.pop();
-  // config.entry.push(path.join(paths.appSrc, 'main.js'));
+  const nodesPath = getFileList(paths.appSrc, 'nodes');
+  // console.log(JSON.stringify(nodesPath));
+  config.entry = nodesPath;
   // config.plugins.push(
   //   new VirtualModulesPlugin({
   //     [path.join(paths.appSrc, 'main.js')]: `

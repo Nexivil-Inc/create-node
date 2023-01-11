@@ -31,6 +31,7 @@ const reactRefreshWebpackPluginRuntimeEntry = require.resolve(
 );
 const getCSSModuleLocalIdent = require('react-dev-utils/getCSSModuleLocalIdent');
 const getCacheIdentifier = require('react-dev-utils/getCacheIdentifier');
+const StatsWriterPlugin = require('../plugins/webpackStatsPlugin');
 const packinfo = require(paths.appPackageJson);
 
 const cssRegex = /\.css$/;
@@ -38,7 +39,7 @@ const cssModuleRegex = /\.module\.css$/;
 const sassRegex = /\.(scss|sass)$/;
 const sassModuleRegex = /\.module\.(scss|sass)$/;
 
-const shouldUseSourceMap = process.env.GENERATE_SOURCEMAP !== 'false';
+const shouldUseSourceMap = process.env.GENERATE_SOURCEMAP === 'true';
 const imageInlineSizeLimit = parseInt(
   process.env.IMAGE_INLINE_SIZE_LIMIT || '10000'
 );
@@ -148,6 +149,7 @@ module.exports = webpackEnv => {
     experiments: {
       // asyncWebAssembly: true,
       syncWebAssembly: true,
+      // outputModule: true,
     },
     module: {
       strictExportPresence: true,
@@ -367,7 +369,7 @@ module.exports = webpackEnv => {
             // },
           ],
         },
-      ],
+      ].filter(Boolean),
     },
     plugins: [
       new ProvidePlugin({
@@ -393,22 +395,146 @@ module.exports = webpackEnv => {
       // - "entrypoints" key: Array of files which are included in `index.html`,
       //   can be used to reconstruct the HTML if necessary
       new WebpackManifestPlugin({
-        fileName: 'asset-manifest.json',
+        fileName: 'manifest.json',
         publicPath: paths.publicUrlOrPath,
         generate: (seed, files, entrypoints) => {
           const manifestFiles = files.reduce((manifest, file) => {
             manifest[file.name] = file.path;
             return manifest;
           }, seed);
-          const entrypointFiles = entrypoints.main.filter(
-            fileName => !fileName.endsWith('.map')
-          );
 
           return {
+            name: packinfo.name.replace('@', ''),
             version: '1.0.0',
             files: manifestFiles,
-            entrypoints: entrypointFiles,
+            entrypoints: Object.entries(entrypoints),
           };
+        },
+      }),
+      new StatsWriterPlugin({
+        stats: ['chunks', 'entrypoints'],
+        transform(data) {
+          try {
+            const chunks = data.chunks;
+            const entrypoints = data.entrypoints;
+            const runtimeChunk = chunks.find(
+              ({ initial, entry, runtime, files }) =>
+                initial &&
+                entry &&
+                runtime[0] === 'runtime' &&
+                files[0] === 'runtime.js'
+            );
+            const refinedChunks = chunks.reduce(
+              (
+                collector,
+                {
+                  initial,
+                  entry,
+                  names,
+                  files,
+                  auxiliaryFiles,
+                  id,
+                  parents,
+                  children,
+                }
+              ) => {
+                if (collector.has(id))
+                  throw new Error(
+                    "'ID' is duplicated! \n This is the '@design/express/node-scripts' bug."
+                  );
+                collector.set(id, {
+                  initial,
+                  entry,
+                  names,
+                  files,
+                  auxiliaryFiles,
+                  id,
+                  parents,
+                  children,
+                });
+                return collector;
+              },
+              new Map()
+            );
+
+            const _cachedDepencyInfo = new Map();
+            const _circularDependency = new Map();
+
+            function injectDependecyInfo(id, ancestor) {
+              if (_cachedDepencyInfo.has(id)) return _cachedDepencyInfo.get(id);
+
+              const {
+                files = [],
+                auxiliaryFiles = [],
+                children = [],
+              } = refinedChunks.get(id);
+
+              const _dependencies = [...files];
+              const _assets = [...auxiliaryFiles];
+
+              if (children?.length > 0) {
+                for (let childID of children) {
+                  if (ancestor.has(childID)) {
+                    const ancestorArr = [...ancestor];
+                    _circularDependency.set(
+                      childID,
+                      ancestorArr.slice(ancestorArr.indexOf(childID))
+                    );
+                    continue;
+                  } else {
+                    const { chunks, assets } = injectDependecyInfo(
+                      childID,
+                      new Set([...ancestor, childID])
+                    );
+                    _dependencies.push(...chunks);
+                    _assets.push(...assets);
+                  }
+                }
+              }
+
+              const _deduplicatedInfo = {
+                chunks: new Set(_dependencies),
+                assets: new Set(_assets),
+              };
+
+              if (_circularDependency.has(id)) {
+                const depIDs = _circularDependency.get(id);
+                depIDs.forEach(_id =>
+                  _cachedDepencyInfo.set(_id, _deduplicatedInfo)
+                );
+                _circularDependency.delete(id);
+              }
+
+              _cachedDepencyInfo.set(id, _deduplicatedInfo);
+              return _deduplicatedInfo;
+            }
+
+            return JSON.stringify(
+              Object.values(entrypoints).reduce(
+                (collector, { name, chunks: chunkIds }) => {
+                  const _chunks = [];
+                  const _assets = [];
+                  for (let id of chunkIds) {
+                    if (id === runtimeChunk.id) continue;
+                    const { chunks, assets } = injectDependecyInfo(
+                      id,
+                      new Set([id])
+                    );
+                    _chunks.push(...chunks);
+                    _assets.push(...assets);
+                  }
+                  collector[name] = {
+                    chunks: [...new Set(_chunks)],
+                    assets: [...new Set(_assets)],
+                  };
+                  return collector;
+                },
+                {}
+              )
+            );
+          } catch (e) {
+            console.error(e);
+          }
         },
       }),
       // Moment.js is an extremely popular library that bundles large locale files
@@ -443,6 +569,7 @@ module.exports = webpackEnv => {
         url: require.resolve('url/'),
         constants: require.resolve('constants-browserify'),
         util: require.resolve('util/'),
+        'process/browser': require.resolve('process/browser'),
       },
       plugins: [
         // Prevents users from importing files from outside of src/ (or node_modules/).
@@ -461,6 +588,7 @@ module.exports = webpackEnv => {
       ],
     },
     output: {
+      iife: false,
       // path: path.resolve(dirname, "dist"),
       path: paths.appBuild,
       filename: '[name].js',
@@ -472,6 +600,7 @@ module.exports = webpackEnv => {
       importFunctionName: 'fetcher',
       // chunkFormat: 'module',
       chunkFormat: 'array-push',
+      // chunkFormat: 'commonjs',
       chunkFilename: isEnvProduction
         ? 'static/js/[name].[contenthash:8].chunk.js'
         : isEnvDevelopment && 'static/js/[name].chunk.js',
@@ -520,10 +649,41 @@ module.exports = webpackEnv => {
       /#extension:/i,
     ],
     optimization: {
-      runtimeChunk: isEnvDevelopment ? 'single' : false,
+      moduleIds: 'deterministic',
+      runtimeChunk: isEnvDevelopment
+        ? 'single'
+        : {
+            name: 'runtime',
+          },
+      removeAvailableModules: true,
+      usedExports: true,
+      innerGraph: true,
+      sideEffects: false,
       splitChunks: {
         chunks: 'async',
         usedExports: true,
+        // name: isEnvProduction
+        // ? 'static/js/[name].[contenthash:8].chunk.js'
+        // : isEnvDevelopment && 'static/js/[name].chunk.js',
+        cacheGroups: {
+          shared: {
+            test: /[\\/]shared[\\/]/,
+            // filename: 'js/[name]/bundle.js',
+            filename: `shared/[name]-[contenthash:8].js`,
+            chunks: 'all',
+            // enforce: true,
+            reuseExistingChunk: true,
+          },
+          vendor: {
+            idHint: 'vendors',
+            test: /[\\/]node_modules[\\/]/,
+            // filename: 'js/[name]/bundle.js',
+            filename: `vendor/[contenthash:8].js`,
+            chunks: 'all',
+            // enforce: true,
+            reuseExistingChunk: true,
+          },
+        },
         // chunks: 'async',
         // // minSize: 20000,
         // // minRemainingSize: 0,
@@ -549,6 +709,7 @@ module.exports = webpackEnv => {
       minimizer: [
         // This is only used in production mode
         new TerserPlugin({
+          parallel: true,
           // minify: TerserPlugin.swcMinify,
           // minify: TerserPlugin.esbuildMinify,
           terserOptions: {
@@ -598,11 +759,8 @@ module.exports = webpackEnv => {
         // This is only used in production mode
         new CssMinimizerPlugin(),
       ],
-      usedExports: true,
-      innerGraph: true,
-      sideEffects: false,
     },
     mode: isEnvProduction ? 'production' : 'development',
-    devtool: 'source-map',
+    devtool: isEnvProduction ? shouldUseSourceMap : 'source-map',
   };
 };
