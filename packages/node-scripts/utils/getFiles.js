@@ -1,6 +1,6 @@
 const { readdirSync } = require('fs-extra');
 const { join } = require('path/posix');
-const nameRegex = new RegExp(/^([^.]+)\.(js|ts|jsx|tsx)$/);
+const nameRegex = new RegExp(/^\+(.+)\.(js|ts|jsx|tsx)$/);
 function getFileList(rootDir, childDir = '', files = {}) {
   const joinedDirPath = join(rootDir, childDir);
 
@@ -12,7 +12,7 @@ function getFileList(rootDir, childDir = '', files = {}) {
     } else {
       const filename = nameRegex.exec(item.name);
       if (filename)
-        files[join(childDir, filename[1])] = join(joinedDirPath, filename[1]);
+        files[join(childDir, filename[1])] = join(joinedDirPath, filename[0]);
     }
   }
 

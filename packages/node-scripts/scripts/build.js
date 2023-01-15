@@ -153,14 +153,9 @@ function build(previousFileSizes) {
   // config.entry.pop();
   const nodesPath = getFileList(paths.appSrc, 'nodes');
   // console.log(JSON.stringify(nodesPath));
-  config.entry = nodesPath;
-  // config.plugins.push(
-  //   new VirtualModulesPlugin({
-  //     [path.join(paths.appSrc, 'main.js')]: `
-  //     import("./index.js").then(m=>)
-  //       `,
-  //   })
-  // );
+  config.entry = nodesPath
+
+
   //enforce public path
   config.output.publicPath = path.posix.join(
     '/pkg/file',
