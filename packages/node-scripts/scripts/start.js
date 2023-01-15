@@ -28,6 +28,7 @@ const chalk = require('react-dev-utils/chalk');
 const webpack = require('webpack');
 const WebpackDevServer = require('webpack-dev-server');
 const clearConsole = require('react-dev-utils/clearConsole');
+const chokidar = require('chokidar');
 // const checkRequiredFiles = require('react-dev-utils/checkRequiredFiles');
 const {
   choosePort,
@@ -77,6 +78,8 @@ if (process.env.HOST) {
 // browserslist defaults.
 const { checkBrowsers } = require('react-dev-utils/browsersHelper');
 const VirtualModulesPlugin = require('webpack-virtual-modules');
+const generatorEntryDev = require('../utils/generateEntryDev');
+
 checkBrowsers(paths.appPath, isInteractive)
   .then(() => {
     // We attempt to use the default port but if it is busy, we offer the user to
@@ -104,43 +107,9 @@ checkBrowsers(paths.appPath, isInteractive)
       ''
     )}/[resource-path]`;
     //enforce HMR accept
-    config.plugins.push(
-      new VirtualModulesPlugin({
-        [path.join(paths.appSrc, 'main.js')]: `
-        import LiteGraph from "litegraph.js";
-        import * as m from "./index";
+    const virtualModules = new VirtualModulesPlugin();
 
-        // document.getElementById("vdom").addEventListener("DOMNodeRemoved", window.__DESIGN_EXPRESS__DO_NOT_USE_THIS__.reboot, {once: true,passive: true,capture: false});
-
-        const nodeSymbol= Symbol.for("fabrica.node");
-        
-        function _extendNodeClassGenerator(t){
-          return class extendNodeClass extends t {
-            constructor(){
-              super(...arguments);
-              this.$$develop = nodeSymbol;
-            }
-          }
-        }
-
-        
-        for (let key in m) {
-          let t = m[key];          
-          LiteGraph.registerNodeType(\`\${t.path ?? "testmodule"}/\${t.title ?? key}\`, _extendNodeClassGenerator(t));
-        }   
-        if (module.hot) {
-          module.hot.accept("./index",function() {
-            for (let key in m) {
-              let t = m[key];
-              LiteGraph.registerNodeType(\`\${t.path ?? "testmodule"}/\${t.title ?? key}\`, _extendNodeClassGenerator(t));
-            }   
-          },function (err, md) {
-            console.log("EROROR");
-          });
-        }
-          `,
-      })
-    );
+    config.plugins.push(virtualModules);
     config.devtool = 'eval-source-map';
 
     // config.plugins.push(
@@ -154,7 +123,7 @@ checkBrowsers(paths.appPath, isInteractive)
     // );
 
     const protocol = process.env.HTTPS === 'true' ? 'https' : 'http';
-
+    let mod = false;
     const useTypeScript = fs.existsSync(paths.appTsConfig);
     const urls = prepareUrls(
       protocol,
@@ -171,6 +140,45 @@ checkBrowsers(paths.appPath, isInteractive)
       useTypeScript,
       webpack,
     });
+
+    // compiler.hooks.watchRun.tap('WatchRun', comp => {
+    //   if (!mod && comp.modifiedFiles) {
+    //     for (let file of comp.modifiedFiles) {
+    //       if (fileRegex.test(file)) {
+    //         mod = true;
+    //         break;
+    //       }
+    //     }
+    //   }
+    // });
+    compiler.hooks.compilation.tap('MyPlugin', comp => {
+      // console.log(compilationParams);
+      // if (!mod && comp.modifiedFiles) {
+      //   for (let file of comp.modifiedFiles) {
+      //     if (fileRegex.test(file)) {
+      //       mod = true;
+      //       break;
+      //     }
+      //   }
+      // }
+      // if (!mod && comp.removedFiles) {
+      //   for (let file of comp.removedFiles) {
+      //     if (fileRegex.test(file)) {
+      //       mod = true;
+      //       break;
+      //     }
+      //   }
+      // }
+      // console.log(mod);
+      // if (mod) {
+      // mod = false;
+      virtualModules.writeModule(
+        path.join(paths.appSrc, 'main.js'),
+        generatorEntryDev()
+      );
+      // }
+    });
+
     // Load proxy config
     const proxySetting = require(paths.appPackageJson).proxy;
     const proxyConfig = prepareProxy(
@@ -187,6 +195,7 @@ checkBrowsers(paths.appPath, isInteractive)
     };
     const devServer = new WebpackDevServer(serverConfig, compiler);
     // Launch WebpackDevServer.
+    let fsWatcher;
     devServer.startCallback(() => {
       if (isInteractive) {
         clearConsole();
@@ -201,11 +210,33 @@ checkBrowsers(paths.appPath, isInteractive)
       }
 
       console.log(chalk.cyan('Starting the development server...\n'));
+      fsWatcher = chokidar.watch(path.join(paths.appSrc, 'nodes/**/+*.js'), {
+        persistent: false,
+        ignoreInitial: true,
+      });
+
+      let timer;
+      fsWatcher
+        .on('add', () => {
+          mod = true;
+          timer = setTimeout(() => {
+            if (mod)
+              virtualModules.writeModule(
+                path.join(paths.appSrc, 'main.js'),
+                ''
+              );
+          }, 1000);
+        })
+        .on('unlink', () => {
+          mod = false;
+          clearTimeout(timer);
+        });
       // openBrowser(urls.localUrlForBrowser);
     });
 
     ['SIGINT', 'SIGTERM'].forEach(function (sig) {
       process.on(sig, function () {
+        fsWatcher.close();
         devServer.close();
         process.exit();
       });
@@ -214,6 +245,7 @@ checkBrowsers(paths.appPath, isInteractive)
     if (process.env.CI !== 'true') {
       // Gracefully exit when stdin ends
       process.stdin.on('end', function () {
+        fsWatcher.close();
         devServer.close();
         process.exit();
       });

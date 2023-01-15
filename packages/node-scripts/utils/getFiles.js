@@ -19,4 +19,35 @@ function getFileList(rootDir, childDir = '', files = {}) {
   return files;
 }
 
+function recursiveGetFileImportList(rootDir, childDir = '', files = {}) {
+  const joinedDirPath = join(rootDir, childDir);
+
+  const items = readdirSync(joinedDirPath, { withFileTypes: true });
+
+  for (const item of items) {
+    if (item.isDirectory()) {
+      recursiveGetFileImportList(rootDir, join(childDir, item.name), files);
+    } else {
+      const filename = nameRegex.exec(item.name);
+      if (filename)
+        files['./' + join(childDir, filename[0])] = join(
+          childDir,
+          filename[1]
+        ).replaceAll('/', '_');
+    }
+  }
+
+  return files;
+}
+function getFileImportList(rootDir, childDir = '') {
+  const importer = recursiveGetFileImportList(rootDir, childDir);
+  return [
+    Object.entries(importer)
+      .map(([path, key]) => `import * as ${key} from "${path}"`)
+      .join(';\n'),
+    importer,
+  ];
+}
+
 module.exports = getFileList;
+module.exports = { getFileImportList };
