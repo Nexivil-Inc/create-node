@@ -625,13 +625,15 @@ module.exports = webpackEnv => {
       ],
     },
     output: {
-      iife: false,
+      iife: !isEnvProduction,
       // path: path.resolve(dirname, "dist"),
       path: paths.appBuild,
-      filename: pathData => {
-        const node = nodesRegex.exec(pathData.chunk.name);
-        return node ? 'node[1]/node[2]' : '[name].js';
-      },
+      filename: isEnvProduction
+        ? pathData => {
+            const node = nodesRegex.exec(pathData.chunk.name);
+            return node ? 'node[1]/node[2]' : '[name].js';
+          }
+        : '[name].js',
       //   publicPath: `/installedext/${'Test'}/dist/`,
       // library: "react-component-library",
       // libraryTarget: 'global',
@@ -703,7 +705,7 @@ module.exports = webpackEnv => {
       usedExports: true,
       innerGraph: true,
       sideEffects: false,
-      splitChunks: {
+      splitChunks: isEnvProduction && {
         chunks: 'async',
         usedExports: true,
         // name: isEnvProduction
