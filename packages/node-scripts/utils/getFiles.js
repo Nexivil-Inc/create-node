@@ -49,5 +49,4 @@ function getFileImportList(rootDir, childDir = '') {
   ];
 }
 
-module.exports = getFileList;
-module.exports = { getFileImportList };
+module.exports = { getFileList, getFileImportList };

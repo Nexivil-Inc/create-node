@@ -64,7 +64,7 @@ const overrideConfig = require(paths.appWiredWebpack);
 const config = overrideConfig(configFactory('production'), 'production');
 // const config = overrideConfig(configFactory('development'), 'development');
 const appPackage = require(paths.appPackageJson);
-const getFileList = require('../utils/getFiles');
+const { getFileList } = require('../utils/getFiles');
 // We require that you explicitly set browsers and do not fall back to
 // browserslist defaults.
 const { checkBrowsers } = require('react-dev-utils/browsersHelper');
@@ -153,8 +153,7 @@ function build(previousFileSizes) {
   // config.entry.pop();
   const nodesPath = getFileList(paths.appSrc, 'nodes');
   // console.log(JSON.stringify(nodesPath));
-  config.entry = nodesPath
-
+  config.entry = nodesPath;
 
   //enforce public path
   config.output.publicPath = path.posix.join(
