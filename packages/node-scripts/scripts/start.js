@@ -97,7 +97,7 @@ checkBrowsers(paths.appPath, isInteractive)
 
     const config = overrideConfig(configFactory('development'), 'development');
     config.entry.pop();
-    config.entry.push(path.join(paths.appSrc, 'main.js'));
+    config.entry.push(path.join(paths.appSrc, 'index.js'));
     config.output.publicPath = `http://localhost:${port}/${appName.replace(
       '@',
       ''
@@ -107,7 +107,12 @@ checkBrowsers(paths.appPath, isInteractive)
       ''
     )}/[resource-path]`;
     //enforce HMR accept
-    const virtualModules = new VirtualModulesPlugin();
+    const virtualModules = new VirtualModulesPlugin({
+      [path.join(
+        paths.appSrc,
+        'index.js'
+      )]: `export * from "./main.js"; if(module.hot) module.hot.accept();`,
+    });
 
     config.plugins.push(virtualModules);
     config.devtool = 'eval-source-map';
