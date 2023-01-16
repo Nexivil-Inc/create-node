@@ -130,7 +130,7 @@ function createApp(name, verbose, version) {
   console.log();
 
   const packageJson = {
-    name: appName,
+    name: `@user/${appName}`,
     version: "0.1.0",
     private: false,
     description: "",
