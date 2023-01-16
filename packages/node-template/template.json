@@ -1,7 +1,6 @@
 {
   "package": {
     "pre_release": false,
-    "main": "build/main.js",
     "readme": "README.md",
     "sandbox": false,
     "devDependencies": {
