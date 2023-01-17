@@ -34,13 +34,15 @@ const getCSSModuleLocalIdent = require('react-dev-utils/getCSSModuleLocalIdent')
 const getCacheIdentifier = require('react-dev-utils/getCacheIdentifier');
 const StatsWriterPlugin = require('../plugins/webpackStatsPlugin');
 const RuntimeModder = require('../plugins/runtimeModder');
+const RuntimeRequirementModder = require('../plugins/runtimeRequirementModder');
 const packinfo = require(paths.appPackageJson);
 
 const cssRegex = /\.css$/;
 const cssModuleRegex = /\.module\.css$/;
 const sassRegex = /\.(scss|sass)$/;
 const sassModuleRegex = /\.module\.(scss|sass)$/;
-const nodesRegex = /(nodes.*[\\/])\+([^\\/]*.js)/;
+const jsRegex = /\.js$/;
+const nodesRegex = /nodes\/.+/;
 
 const shouldUseSourceMap = process.env.GENERATE_SOURCEMAP === 'true';
 const imageInlineSizeLimit = parseInt(
@@ -64,9 +66,7 @@ module.exports = webpackEnv => {
         loader: MiniCssExtractPlugin.loader,
         // css is located in `static/css`, use '../../' to locate index.html folder
         // in production `paths.publicUrlOrPath` can be a relative path
-        options: paths.publicUrlOrPath.startsWith('.')
-          ? { publicPath: '../../' }
-          : {},
+        options: {},
       },
       {
         loader: require.resolve('css-loader'),
@@ -207,7 +207,7 @@ module.exports = webpackEnv => {
                 {
                   loader: require.resolve('file-loader'),
                   options: {
-                    name: 'static/media/[name].[hash].[ext]',
+                    name: 'assets/[hash].[ext]',
                   },
                 },
               ],
@@ -377,6 +377,7 @@ module.exports = webpackEnv => {
       ].filter(Boolean),
     },
     plugins: [
+      isEnvProduction && new RuntimeRequirementModder(),
       new ProvidePlugin({
         process: 'process/browser',
         Buffer: ['buffer', 'Buffer'],
@@ -393,8 +394,14 @@ module.exports = webpackEnv => {
       // a plugin that prints an error when you attempt to do this.
       // See https://github.com/facebook/create-react-app/issues/240
       isEnvDevelopment && new CaseSensitivePathsPlugin(),
-      isEnvProduction && new MiniCssExtractPlugin(),
       isEnvProduction && new RuntimeModder(),
+      isEnvProduction &&
+        new MiniCssExtractPlugin({
+          runtime: false,
+          experimentalUseImportModule: false,
+          filename: 'css/[contenthash].css',
+          chunkFilename: 'css/[contenthash].chunk.css',
+        }),
       // Generate an asset manifest file with the following content:
       // - "files" key: Mapping of all asset filenames to their corresponding
       //   output file so that tools can pick it up without having to parse
@@ -404,16 +411,17 @@ module.exports = webpackEnv => {
       new WebpackManifestPlugin({
         fileName: 'manifest.json',
         publicPath: paths.publicUrlOrPath,
+        removeKeyHash: false,
         generate: (seed, files, entrypoints) => {
           const manifestFiles = files.reduce((manifest, file) => {
-            manifest[file.name] = file.path;
+            manifest[file.name] = join(file.path);
             return manifest;
           }, seed);
 
           const fileMapper = files.reduce((manifest, file) => {
             if (file.chunk?.ids)
               for (let id of file.chunk.ids) {
-                manifest.push([Number(id), file.name]);
+                manifest.push([Number(id), manifestFiles[file.name]]);
               }
             return manifest;
           }, []);
@@ -428,17 +436,28 @@ module.exports = webpackEnv => {
             rootPath,
             files: manifestFiles,
             fileMap: Object.fromEntries(
-              fileMapper.map(([id, _path]) => [id, join(rootPath, _path)])
+              fileMapper.filter(([, _path]) => jsRegex.test(_path))
             ),
             entrypoints: Object.entries(entrypoints)
               .map(([nodesName, chunks]) => {
                 if (nodesName.startsWith('nodes/')) {
-                  const filePath = `${nodesName}.js`;
+                  const filePath = manifestFiles[`${nodesName}.js`];
                   return [
                     nodesName,
-                    chunks
-                      .filter(n => n !== 'runtime.js' && n !== filePath)
-                      .map(n => _cachedFileMapper[n]),
+                    ...chunks
+                      .filter(
+                        n => n !== 'runtime.js' && `build/${n}` !== filePath
+                      )
+                      .reduce(
+                        (c, n) => {
+                          console.log(n);
+                          if (jsRegex.test(n))
+                            c[0].push(_cachedFileMapper[manifestFiles[n]]);
+                          else c[1].push(manifestFiles[n]);
+                          return c;
+                        },
+                        [[], []]
+                      ),
                     _cachedFileMapper[filePath],
                   ];
                 }
@@ -630,8 +649,9 @@ module.exports = webpackEnv => {
       path: paths.appBuild,
       filename: isEnvProduction
         ? pathData => {
-            const node = nodesRegex.exec(pathData.chunk.name);
-            return node ? 'node[1]/node[2]' : '[name].js';
+            return nodesRegex.test(pathData.chunk.name)
+              ? 'nodes/[contenthash].js'
+              : '[name].js';
           }
         : '[name].js',
       //   publicPath: `/installedext/${'Test'}/dist/`,
@@ -648,8 +668,8 @@ module.exports = webpackEnv => {
       chunkFormat: 'array-push',
       // chunkFormat: 'commonjs',
       chunkFilename: isEnvProduction
-        ? 'static/js/[name].[contenthash:10].chunk.js'
-        : isEnvDevelopment && 'static/js/[name].chunk.js',
+        ? 'chunks/[contenthash].js'
+        : 'static/js/[name].chunk.js',
       // // Bug: https://github.com/callstack/repack/issues/201#issuecomment-1186682200
       // clean: true,
       libraryTarget: isEnvDevelopment ? 'window' : 'amd',
@@ -658,7 +678,9 @@ module.exports = webpackEnv => {
         type: isEnvDevelopment ? 'window' : 'amd',
       },
       uniqueName: packinfo.name.replace('@', ''),
-      assetModuleFilename: 'static/media/[name].[contenthash:10][ext]',
+      assetModuleFilename: isEnvProduction
+        ? 'assets/[contenthash][ext]'
+        : '[name].[contenthash:8][ext]',
     },
     externals: [
       {
@@ -715,7 +737,7 @@ module.exports = webpackEnv => {
           shared: {
             test: /[\\/]shared[\\/]/,
             // filename: 'js/[name]/bundle.js',
-            filename: `shared/[name]-[contenthash:8].js`,
+            filename: `chunks/[contenthash].js`,
             chunks: 'all',
             // enforce: true,
             reuseExistingChunk: true,
@@ -724,7 +746,7 @@ module.exports = webpackEnv => {
             idHint: 'vendors',
             test: /[\\/]node_modules[\\/]/,
             // filename: 'js/[name]/bundle.js',
-            filename: `vendor/[name].[contenthash:8].js`,
+            filename: `chunks/[contenthash].js`,
             chunks: 'all',
             // enforce: true,
             reuseExistingChunk: true,
