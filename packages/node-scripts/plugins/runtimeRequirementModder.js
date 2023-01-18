@@ -20,7 +20,7 @@ class RuntimeRequirementModder {
         compilation.hooks.runtimeRequirementInTree
           .for(RuntimeGlobals.require)
           .tap('RuntimeRequirementModderPlugin', (chunk, set) => {
-            set.add(RuntimeGlobals.externalInstallChunk);
+            // set.add(RuntimeGlobals.externalInstallChunk);
             set.add(RuntimeGlobals.ensureChunk);
             set.add(RuntimeGlobals.ensureChunkHandlers);
             set.add(RuntimeGlobals.onChunksLoaded);
