@@ -207,7 +207,9 @@ module.exports = webpackEnv => {
                 {
                   loader: require.resolve('file-loader'),
                   options: {
-                    name: 'assets/[hash].[ext]',
+                    name: isEnvProduction
+                      ? 'assets/[hash].[ext]'
+                      : '[hash].[ext]',
                   },
                 },
               ],
@@ -651,7 +653,7 @@ module.exports = webpackEnv => {
         ? pathData => {
             return nodesRegex.test(pathData.chunk.name)
               ? 'nodes/[contenthash].js'
-              : '[name].js';
+              : '[name].[contenthash:8].js';
           }
         : '[name].js',
       //   publicPath: `/installedext/${'Test'}/dist/`,
@@ -663,13 +665,14 @@ module.exports = webpackEnv => {
         /^@([^/]+)\/(.+)$/,
         '$1_$2'
       )}`,
+      globalObject: isEnvDevelopment ? 'globalThis' : 'dxnexivil',
       importFunctionName: 'fetcher',
       // chunkFormat: 'module',
       chunkFormat: 'array-push',
       // chunkFormat: 'commonjs',
       chunkFilename: isEnvProduction
         ? 'chunks/[contenthash].js'
-        : 'static/js/[name].chunk.js',
+        : isEnvDevelopment && '[name].[contenthash:8].chunk.js',
       // // Bug: https://github.com/callstack/repack/issues/201#issuecomment-1186682200
       // clean: true,
       libraryTarget: isEnvDevelopment ? 'window' : 'amd',
@@ -737,7 +740,9 @@ module.exports = webpackEnv => {
           shared: {
             test: /[\\/]shared[\\/]/,
             // filename: 'js/[name]/bundle.js',
-            filename: `chunks/[contenthash].js`,
+            filename: isEnvProduction
+              ? 'chunks/[contenthash].js'
+              : '[contenthash].js',
             chunks: 'all',
             // enforce: true,
             reuseExistingChunk: true,
@@ -746,7 +751,9 @@ module.exports = webpackEnv => {
             idHint: 'vendors',
             test: /[\\/]node_modules[\\/]/,
             // filename: 'js/[name]/bundle.js',
-            filename: `chunks/[contenthash].js`,
+            filename: isEnvProduction
+              ? 'chunks/[contenthash].js'
+              : '[contenthash].js',
             chunks: 'all',
             // enforce: true,
             reuseExistingChunk: true,
