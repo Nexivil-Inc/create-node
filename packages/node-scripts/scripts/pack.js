@@ -1,7 +1,7 @@
 'use strict';
 const crypto = require('crypto');
 const ZstdCodec = require('@liradb2000/zstd-codec/lib/zstd-stream');
-const chalk = require('chalk');
+// const chalk = require('chalk');
 const tar = require('tar');
 const fs = require('fs-extra');
 const path = require('path');
@@ -14,20 +14,21 @@ process.on('unhandledRejection', err => {
 const nameRegex = new RegExp(/^(?:@(?<namespace>\w+)\/)?(?<name>.+)$/);
 const XNODE_MAGIC_NUMBER = Buffer.from([0x58, 0x4e, 0x30, 0x44, 0x65], 'hex');
 // magicNumber; //XN0De
-// 225; //name
+// 32; //name
+// 193; //empty (future)
 // 32; //integrity
 // 32; //deps;
 // 32; //downloader (origin:80)
 
 // 12; //vi
 
-function recursiveFileList(startPath) {
-  const dirInfo = fs.readdirSync(paths.appPath, { withFileTypes: true });
-  for (let info of dirInfo) {
-    if (info.isDirectory()) recursiveFileList(path.join(startPath, info.name));
-  }
-  return dirInfo;
-}
+// function recursiveFileList(startPath) {
+//   const dirInfo = fs.readdirSync(paths.appPath, { withFileTypes: true });
+//   for (let info of dirInfo) {
+//     if (info.isDirectory()) recursiveFileList(path.join(startPath, info.name));
+//   }
+//   return dirInfo;
+// }
 const packInfo = require(paths.appPackageJson);
 const { name = '' } = nameRegex.exec(packInfo.name)?.groups ?? {};
 
@@ -38,7 +39,7 @@ function packList() {
 
   mergeFiles.add('package.json');
   if (packInfo.readme) mergeFiles.add(path.join('.', packInfo.readme));
-  console.log(mergeFiles);
+  // console.log(mergeFiles);
   const compressPromise = new Promise(resolve => {
     ZstdCodec.run(streams => {
       //   const streaming = new zstd.Streaming();
@@ -49,7 +50,14 @@ function packList() {
       );
       const nameBuffer = Buffer.alloc(326);
       nameBuffer.fill(XNODE_MAGIC_NUMBER, 0, 5);
-      nameBuffer.write(packInfo.name.replace('@', ''), 5, 'utf-8');
+      nameBuffer.fill(
+        crypto
+          .createHash('sha256')
+          .update(packInfo.name.replace('@', ''))
+          .digest(),
+        5,
+        37
+      );
       //   nameBuffer.write(packInfo.name, 6, 'utf-8'); // set integrity pos
       sink.write(nameBuffer);
       sink.on('finish', function () {

@@ -68,6 +68,7 @@ const { getFileList } = require('../utils/getFiles');
 // We require that you explicitly set browsers and do not fall back to
 // browserslist defaults.
 const { checkBrowsers } = require('react-dev-utils/browsersHelper');
+const { createHash } = require('crypto');
 checkBrowsers(paths.appPath, isInteractive)
   .then(() => {
     // First, read the current file sizes in build directory.
@@ -158,7 +159,7 @@ function build(previousFileSizes) {
   //enforce public path
   config.output.publicPath = path.posix.join(
     '/pkg/file',
-    appPackage.name.replace('@', ''),
+    createHash('sha256').update(appPackage.name.replace('@', '')).digest('hex'),
     path.basename(paths.appBuild) + '/'
   );
 
