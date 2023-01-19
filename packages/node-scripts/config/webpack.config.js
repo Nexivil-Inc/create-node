@@ -99,6 +99,10 @@ module.exports = webpackEnv => {
                   // so that it honors browserslist config in package.json
                   // which in turn let's users customize the target behavior as per their needs.
                   'postcss-normalize',
+                  [
+                    require.resolve('../plugins/cssWrapperPlugin'),
+                    { selector: '.quarantine-parent' },
+                  ],
                 ]
               : [
                   'tailwindcss',
@@ -111,6 +115,10 @@ module.exports = webpackEnv => {
                       },
                       stage: 3,
                     },
+                  ],
+                  [
+                    require.resolve('../plugins/cssWrapperPlugin'),
+                    { selector: '.quarantine-parent' },
                   ],
                 ],
           },
@@ -432,6 +440,8 @@ module.exports = webpackEnv => {
             fileMapper.map(([k, v]) => [v, k])
           );
 
+          const _runtimePath = manifestFiles['runtime.js'];
+
           return {
             name: packinfo.name.replace('@', ''),
             version: '1.0.0',
@@ -447,15 +457,16 @@ module.exports = webpackEnv => {
                   return [
                     nodesName,
                     ...chunks
-                      .filter(
-                        n => n !== 'runtime.js' && `build/${n}` !== filePath
-                      )
+                      .filter(n => {
+                        let _n = `${rootPath}/${n}`;
+                        return _n !== _runtimePath && _n !== filePath;
+                      })
                       .reduce(
                         (c, n) => {
-                          console.log(n);
                           if (jsRegex.test(n))
                             c[0].push(_cachedFileMapper[manifestFiles[n]]);
-                          else c[1].push(manifestFiles[n]);
+                          else
+                            c[1].push(manifestFiles[n] ?? `${rootPath}/${n}`);
                           return c;
                         },
                         [[], []]
@@ -653,6 +664,8 @@ module.exports = webpackEnv => {
         ? pathData => {
             return nodesRegex.test(pathData.chunk.name)
               ? 'nodes/[contenthash].js'
+              : pathData.chunk.name === 'runtime'
+              ? '[name].js'
               : '[name].[contenthash:8].js';
           }
         : '[name].js',

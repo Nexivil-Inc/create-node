@@ -24,7 +24,7 @@ class RuntimeRequirementModder {
             set.add(RuntimeGlobals.ensureChunk);
             set.add(RuntimeGlobals.ensureChunkHandlers);
             set.add(RuntimeGlobals.onChunksLoaded);
-            set.add(RuntimeGlobals.hmrDownloadUpdateHandlers);
+            // set.add(RuntimeGlobals.hmrDownloadUpdateHandlers);
             set.add(RuntimeGlobals.getChunkScriptFilename);
             set.add(RuntimeGlobals.moduleFactoriesAddOnly);
             set.add(RuntimeGlobals.hasOwnProperty);
