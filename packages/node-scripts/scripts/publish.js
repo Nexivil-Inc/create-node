@@ -8,9 +8,7 @@ process.on('unhandledRejection', err => {
 const path = require('path');
 
 const crypto = require('crypto');
-const { readFileSync, } = require('fs');
-
-
+const { readFileSync } = require('fs');
 
 const paths = require('../config/paths');
 
@@ -33,10 +31,13 @@ function startServer(port, data) {
   var corsOptions = {
     origin: 'https://upload.nexivil.com',
     // origin: 'https://localhost:3001',
-    methods: 'GET',
+    methods: ['GET', 'OPTIONS'],
     optionsSuccessStatus: 200, // some legacy browsers (IE11, various SmartTVs) choke on 204
   };
-
+  app.use(function setCommonHeaders(req, res, next) {
+    res.set('Access-Control-Allow-Private-Network', 'true');
+    next();
+  });
   app.use(cors(corsOptions));
   app.get(`/${key}`, (req, res) => {
     Object.entries(data.getHeaders()).forEach(([k, v]) => res.setHeader(k, v));
