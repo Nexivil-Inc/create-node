@@ -31,7 +31,7 @@ function startServer(port, data) {
   const app = express();
 
   var corsOptions = {
-    origin: 'https://x.nexivil.com',
+    origin: 'https://upload.nexivil.com',
     // origin: 'https://localhost:3001',
     methods: 'GET',
     optionsSuccessStatus: 200, // some legacy browsers (IE11, various SmartTVs) choke on 204
@@ -48,7 +48,7 @@ function startServer(port, data) {
   const server = app.listen(port, () => {
     console.log('Continue ...');
     try {
-      openBrowser(`https://x.nexivil.com/upload/nodes?q=${key}&p=${port}`);
+      openBrowser(`https://upload.nexivil.com/upload/nodes?q=${key}&p=${port}`);
       // openBrowser(`https://localhost:3001/upload/nodes?q=${key}&p=${port}`);
     } catch {}
 
