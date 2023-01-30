@@ -444,7 +444,7 @@ module.exports = webpackEnv => {
 
           return {
             name: packinfo.name.replace('@', ''),
-            version: '1.0.0',
+            xnodeVersion: '1.0.0',
             rootPath,
             files: manifestFiles,
             fileMap: Object.fromEntries(
