@@ -17,7 +17,9 @@ const getPublicUrlOrPath = require('react-dev-utils/getPublicUrlOrPath');
 const appDirectory = fs.realpathSync(process.cwd());
 const resolveApp = relativePath => path.resolve(appDirectory, relativePath);
 
-const buildPath = process.env.BUILD_PATH || 'build';
+// @TODO: Support Dynamic buildPath
+// const buildPath = process.env.BUILD_PATH || 'build';
+const buildPath = 'build';
 // We use `PUBLIC_URL` environment variable or "homepage" field to infer
 // "public path" at which the app is served.
 // webpack needs to know it to put the right <script> hrefs into HTML even in
