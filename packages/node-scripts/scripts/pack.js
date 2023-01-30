@@ -6,6 +6,7 @@ const tar = require('tar');
 const fs = require('fs-extra');
 const path = require('path');
 const paths = require('../config/paths');
+const { basename } = require('path');
 // const { Writable } = require('stream');
 process.on('unhandledRejection', err => {
   throw err;
@@ -33,18 +34,12 @@ const packInfo = require(paths.appPackageJson);
 const { name = '' } = nameRegex.exec(packInfo.name)?.groups ?? {};
 
 function packList() {
-  const mergeFiles = new Set(
-    packInfo.files.map(filepath => path.join('.', filepath))
-  );
-
-  mergeFiles.add('package.json');
-  if (packInfo.readme) mergeFiles.add(path.join('.', packInfo.readme));
   // console.log(mergeFiles);
   const compressPromise = new Promise(resolve => {
     ZstdCodec.run(streams => {
       //   const streaming = new zstd.Streaming();
       const ZstdCompressTransform = streams.ZstdCompressTransform;
-      const second_compress = new ZstdCompressTransform(22);
+      const second_compress = new ZstdCompressTransform(3);
       const sink = fs.createWriteStream(
         path.join(paths.appPath, `${name}-${packInfo.version}.xnode`)
       );
@@ -74,7 +69,10 @@ function packList() {
       //     },
       //   });
       tar
-        .c({ gzip: false }, [...mergeFiles])
+        .c(
+          { gzip: false, portable: true, noMtime: true, preservePaths: false },
+          [basename(paths.appBuild)]
+        )
         .pipe(second_compress)
         .pipe(sink);
     });
@@ -87,11 +85,14 @@ function injectIntegrity() {
   const integrity = crypto
     .createHash('sha256')
     .update(
-      fs.readFileSync(
-        path.join(paths.appPath, `${name}-${packInfo.version}.xnode`)
-      )
+      fs
+        .readFileSync(
+          path.join(paths.appPath, `${name}-${packInfo.version}.xnode`)
+        )
+        .subarray(326)
     )
     .digest();
+  console.log(integrity.toString('hex'));
   const fd = fs.openSync(
     path.join(paths.appPath, `${name}-${packInfo.version}.xnode`),
     'r+'
