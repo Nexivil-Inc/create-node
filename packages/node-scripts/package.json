@@ -54,6 +54,7 @@
     "chalk": "^4.1.0",
     "constants-browserify": "^1.0.0",
     "copy-webpack-plugin": "^11.0.0",
+    "cors": "^2.8.5",
     "cross-spawn": "^7.0.3",
     "css-loader": "^6.7.1",
     "css-minimizer-webpack-plugin": "^4.2.2",
