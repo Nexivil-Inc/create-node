@@ -23,14 +23,16 @@ const FormData = require('form-data');
 
 const DEFAULT_PORT = parseInt(process.env.PORT, 10) || 5023;
 const HOST = process.env.HOST || '0.0.0.0';
+const isLocalhost = process.env.localhost?.trim().toLowerCase() === 'true';
 
 function startServer(port, data) {
   const key = crypto.randomUUID().replaceAll('-', '');
   const app = express();
 
   var corsOptions = {
-    origin: 'https://upload.nexivil.com',
-    // origin: 'https://localhost:3001',
+    origin: isLocalhost
+      ? 'https://localhost:5022'
+      : 'https://upload.nexivil.com',
     methods: ['GET', 'OPTIONS'],
     optionsSuccessStatus: 200, // some legacy browsers (IE11, various SmartTVs) choke on 204
   };
@@ -49,8 +51,11 @@ function startServer(port, data) {
   const server = app.listen(port, () => {
     console.log('Continue ...');
     try {
-      openBrowser(`https://upload.nexivil.com/upload/nodes?q=${key}&p=${port}`);
-      // openBrowser(`https://localhost:3001/upload/nodes?q=${key}&p=${port}`);
+      isLocalhost
+        ? openBrowser(`https://localhost:5022/upload/nodes?q=${key}&p=${port}`)
+        : openBrowser(
+            `https://upload.nexivil.com/upload/nodes?q=${key}&p=${port}`
+          );
     } catch {}
 
     console.log(` ${port}`);
