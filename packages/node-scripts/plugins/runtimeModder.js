@@ -43,14 +43,14 @@ if(typeof ${RuntimeGlobals.require} !== "undefined") {
     }
 
     const removeCondition = new RegExp(
-      /(\w\.f\.j=function\([^,]+,[^,]+\)\{.+else if)(\([^)]+\))/
+      /(\w\.f\.j=.+else if)(\([^)]+\))([^=]+=fetcher)/
     );
     compiler.hooks.emit.tapAsync('ReplacePlugin', (compilation, callback) => {
       Object.keys(compilation.assets).forEach(filename => {
         if (filename === 'runtime.js') {
           let source = compilation.assets[filename].source();
           if (!removeCondition.exec(source)[2].includes('666!='))
-            source = source.replace(removeCondition, '$1(true)');
+            source = source.replace(removeCondition, '$1(true)$3');
 
           compilation.assets[filename] = {
             source: () => source,
