@@ -6,6 +6,17 @@ const pluginName = 'RuntimeModderPlugin';
 class RuntimeModder {
   apply(compiler) {
     try {
+      // compiler.hooks.make.tap('MyPlugin', compilation => {
+      //   const runtimeConditionExpression =
+      //     compilation.runtimeTemplate.runtimeConditionExpression;
+      //   compilation.runtimeTemplate.runtimeConditionExpression =
+      //     chunk => {
+      //       const condition = runtimeConditionExpression(chunk);
+      //       console.log(condition);
+      //       return "assadsad";
+      //     };
+      // });
+
       compiler.hooks.thisCompilation.tap(pluginName, compilation => {
         const { mainTemplate, runtimeTemplate } = compilation;
 
@@ -30,6 +41,26 @@ if(typeof ${RuntimeGlobals.require} !== "undefined") {
     } catch (e) {
       console.error(e);
     }
+
+    const removeCondition = new RegExp(
+      /(\w\.f\.j=function\([^,]+,[^,]+\)\{.+else if)(\([^)]+\))/
+    );
+    compiler.hooks.emit.tapAsync('ReplacePlugin', (compilation, callback) => {
+      Object.keys(compilation.assets).forEach(filename => {
+        if (filename === 'runtime.js') {
+          let source = compilation.assets[filename].source();
+          if (!removeCondition.exec(source)[2].includes('666!='))
+            source = source.replace(removeCondition, '$1(true)');
+
+          compilation.assets[filename] = {
+            source: () => source,
+            size: () => source.length,
+          };
+        }
+      });
+
+      callback();
+    });
   }
 }
 module.exports = RuntimeModder;
