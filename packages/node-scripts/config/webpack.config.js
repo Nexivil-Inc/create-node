@@ -849,6 +849,6 @@ module.exports = webpackEnv => {
       ],
     },
     mode: isEnvProduction ? 'production' : 'development',
-    devtool: isEnvProduction ? shouldUseSourceMap : 'source-map',
+    devtool: isEnvProduction ? shouldUseSourceMap : 'eval',
   };
 };
