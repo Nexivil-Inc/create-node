@@ -4,7 +4,8 @@ const keytar = require('keytar');
 const chalk = require('chalk');
 const readline = require('readline');
 
-const service = 'nexivil/design-express/v1';
+// const service = 'nexivil/design-express/v1';
+const service = 'nexivil/design-express/v1/stable';
 
 async function setAuth() {
   let user, token;
