@@ -1,6 +1,6 @@
 {
   "name": "@design-express/node-scripts",
-  "version": "1.0.2+2305221141",
+  "version": "1.0.3+2305221150",
   "description": "Design Express™ Fabrica node development Tools and Scripts",
   "engines": {
     "node": ">=16.0.0"
