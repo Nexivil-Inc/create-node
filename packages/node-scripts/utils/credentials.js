@@ -3,9 +3,12 @@
 const keytar = require('keytar');
 const chalk = require('chalk');
 const readline = require('readline');
+const isLocalhost = process.env.localhost?.trim().toLowerCase() === 'true';
 
-// const service = 'nexivil/design-express/v1';
-const service = 'nexivil/design-express/v1/stable';
+const service = isLocalhost
+  ? 'nexivil/design-express/v1/preview'
+  : 'nexivil/design-express/v1';
+// const service = 'nexivil/design-express/v1/stable';
 
 async function setAuth() {
   let user, token;
