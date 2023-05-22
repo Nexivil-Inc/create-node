@@ -7,15 +7,19 @@ module.exports = class ClientWS extends baseclass {
    * @param {(...args: any[]) => void} f
    */
   onOpen(f) {
-    window.__socketEmitter__?.addOrUpdate?.('@dabeom/firestore', 1);
-    this.client.onopen = f;
+    this.client.onopen = () => {
+      window.__socketEmitter__?.addOrUpdate?.('@dabeom/firestore', 1);
+      f(...arguments);
+    };
   }
 
   /**
    * @param {(...args: any[]) => void} f
    */
   onClose(f) {
-    window.__socketEmitter__?.delete?.('@dabeom/firestore');
-    this.client.onclose = f;
+    this.client.onclose = () => {
+      window.__socketEmitter__?.delete?.('@dabeom/firestore');
+      f(...arguments);
+    };
   }
 };
