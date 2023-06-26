@@ -8,7 +8,7 @@ const { join } = require('path/posix');
 const paths = require('../config/paths');
 const modules = require('./modules');
 
-const { ProvidePlugin, IgnorePlugin } = require('webpack');
+const { ProvidePlugin, IgnorePlugin, DefinePlugin } = require('webpack');
 const TerserPlugin = require('terser-webpack-plugin');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const CssMinimizerPlugin = require('css-minimizer-webpack-plugin');
@@ -399,6 +399,11 @@ module.exports = webpackEnv => {
         new ReactRefreshWebpackPlugin({
           overlay: false,
           library: packinfo.name.replace('@', ''),
+        }),
+      isEnvDevelopment &&
+        shouldUseReactRefresh &&
+        new DefinePlugin({
+          'process.env.NXV_NODE_NAME': `"${packinfo.name}"`,
         }),
       // Watcher doesn't work well if you mistype casing in a path so we use
       // a plugin that prints an error when you attempt to do this.
