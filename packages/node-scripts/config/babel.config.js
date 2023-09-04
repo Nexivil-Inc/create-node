@@ -153,7 +153,7 @@ module.exports = function getBabelConfig(_, opts) {
       { loose: true },
     ],
     [
-      require('@babel/plugin-proposal-private-property-in-object').default,
+      require('@babel/plugin-transform-private-property-in-object').default,
       { loose: true },
     ],
     [

@@ -92,6 +92,7 @@ module.exports = webpackEnv => {
                       autoprefixer: {
                         flexbox: 'no-2009',
                       },
+                      enableClientSidePolyfills: true,
                       stage: 3,
                     },
                   ],
@@ -113,6 +114,7 @@ module.exports = webpackEnv => {
                       autoprefixer: {
                         flexbox: 'no-2009',
                       },
+                      enableClientSidePolyfills: true,
                       stage: 3,
                     },
                   ],

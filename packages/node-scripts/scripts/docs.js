@@ -1,21 +1,21 @@
-"use strict";
+'use strict';
 
-const path = require("path");
-const { writeFileSync, mkdirSync, existsSync } = require("fs");
+const path = require('path');
+const { writeFileSync, mkdirSync, existsSync } = require('fs');
 
-const chalk = require("chalk");
-const jsdoc2md = require("jsdoc-to-markdown");
+const chalk = require('chalk');
+const jsdoc2md = require('jsdoc-to-markdown');
 
-const { appPath } = require("../config/paths");
+const { appPath } = require('../config/paths');
 
-console.log(chalk.green("Generating documents..."));
+console.log(chalk.green('Generating documents...'));
 
 const docs = jsdoc2md.renderSync({
-    plugin: __dirname + "/plugins/docs/index.js",
-    files: path.resolve(appPath, "./src/**/*.js"),
-    "module-index-format": "groupd",
-    "global-index-format": "grouped",
+  plugin: __dirname + '/plugins/docs/index.js',
+  files: path.resolve(appPath, './src/**/*.js'),
+  'module-index-format': 'groupd',
+  'global-index-format': 'grouped',
 });
-if (!existsSync(path.resolve(appPath, "docs")))
-    mkdirSync(path.resolve(appPath, "docs"));
-writeFileSync(path.resolve(appPath, "docs/index.md"), docs, { flag: "" });
+if (!existsSync(path.resolve(appPath, 'docs')))
+  mkdirSync(path.resolve(appPath, 'docs'));
+writeFileSync(path.resolve(appPath, 'docs/index.md'), docs, { flag: '' });
