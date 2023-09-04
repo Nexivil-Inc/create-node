@@ -310,7 +310,8 @@ function run(root, appName, version, verbose, originalDirectory) {
 }
 
 function getInstallPackage(version, originalDirectory) {
-  let packageToInstall = "@design-express/node-scripts@beta";
+  let packageToInstall = "@design-express/node-scripts@latest";
+  // let packageToInstall = "@design-express/node-scripts";
   const validSemver = semver.valid(version);
   if (validSemver) {
     packageToInstall += `@${validSemver}`;
@@ -360,7 +361,8 @@ function getInstallPackage(version, originalDirectory) {
 }
 
 function getTemplateInstallPackage(template, originalDirectory) {
-  let templateToInstall = "@design-express/node-template@beta";
+  let templateToInstall = "@design-express/node-template@latest";
+  // let templateToInstall = "@design-express/node-template";
   if (template) {
     if (template.match(/^file:/)) {
       templateToInstall = `file:${path.resolve(
