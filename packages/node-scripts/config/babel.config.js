@@ -157,7 +157,7 @@ module.exports = function getBabelConfig(_, opts) {
       { loose: true },
     ],
     [
-      require('@babel/plugin-proposal-object-rest-spread').default,
+      require('@babel/plugin-transform-object-rest-spread').default,
       { loose: true },
     ],
     [
