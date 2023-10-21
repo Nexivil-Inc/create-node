@@ -149,6 +149,37 @@ module.exports = webpackEnv => {
   };
 
   const shouldUseReactRefresh = process.env.FAST_REFRESH !== 'false';
+  const babelLoaderConfig = {
+    loader: require.resolve('babel-loader'),
+    options: {
+      babelrc: false,
+      configFile: false,
+      compact: false,
+      presets: [require.resolve('./babel.config')],
+      cacheDirectory: true,
+      cacheCompression: false,
+      cacheIdentifier: getCacheIdentifier(
+        isEnvProduction ? 'production' : isEnvDevelopment && 'development',
+        [
+          'babel-plugin-named-asset-import',
+          'babel-preset-react-app',
+          'react-dev-utils',
+          'react-scripts',
+        ]
+      ),
+      sourceMaps: shouldUseSourceMap,
+      inputSourceMap: shouldUseSourceMap,
+    },
+  };
+  const workerBabelConfig = {
+    loader: babelLoaderConfig.loader,
+    options: {
+      ...babelLoaderConfig.options,
+      presets: [
+        [require.resolve('./babel.config'), { globalKey: 'globalThis' }],
+      ],
+    },
+  };
   return {
     entry: [
       isEnvDevelopment &&
@@ -228,30 +259,26 @@ module.exports = webpackEnv => {
               },
             },
             {
+              test: /\.worker\.(js|mjs)$/,
+              use: [
+                {
+                  loader: require.resolve('worker-loader'),
+                  options: {
+                    inline: 'fallback',
+                    filename: 'chunks/[name].[contenthash:8].js',
+                  },
+                },
+                workerBabelConfig,
+              ],
+            },
+            {
+              ...babelLoaderConfig,
               test: /\.(js|mjs)$/,
-              exclude: [/node_modules/, /@babel(?:\/|\\{1,2})runtime/],
-              loader: require.resolve('babel-loader'),
-              options: {
-                babelrc: false,
-                configFile: false,
-                compact: false,
-                presets: [require.resolve('./babel.config')],
-                cacheDirectory: true,
-                cacheCompression: false,
-                cacheIdentifier: getCacheIdentifier(
-                  isEnvProduction
-                    ? 'production'
-                    : isEnvDevelopment && 'development',
-                  [
-                    'babel-plugin-named-asset-import',
-                    'babel-preset-react-app',
-                    'react-dev-utils',
-                    'react-scripts',
-                  ]
-                ),
-                sourceMaps: shouldUseSourceMap,
-                inputSourceMap: shouldUseSourceMap,
-              },
+              exclude: [
+                /node_modules/,
+                /@babel(?:\/|\\{1,2})runtime/,
+                /\.worker\.(js|mjs)$/,
+              ],
             },
             {
               test: cssRegex,

@@ -140,7 +140,7 @@ module.exports = function getBabelConfig(_, opts) {
     require('babel-plugin-no-side-effect-class-properties'),
     [
       require('@liradb2000/babel-plugin-transform-globals'),
-      { replace: 'browser' },
+      { replace: 'browser', globalKey: opts.globalKey ?? 'window' },
     ],
     // Need the following 3 proposals for all targets in .browserslistrc.
     // With our usage the transpiled loose mode is equivalent to spec mode.
