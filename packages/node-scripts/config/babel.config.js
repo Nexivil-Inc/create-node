@@ -145,11 +145,11 @@ module.exports = function getBabelConfig(_, opts) {
     // Need the following 3 proposals for all targets in .browserslistrc.
     // With our usage the transpiled loose mode is equivalent to spec mode.
     [
-      require('@babel/plugin-proposal-class-properties').default,
+      require('@babel/plugin-transform-class-properties').default,
       { loose: true },
     ],
     [
-      require('@babel/plugin-proposal-private-methods').default,
+      require('@babel/plugin-transform-private-methods').default,
       { loose: true },
     ],
     [
@@ -161,7 +161,15 @@ module.exports = function getBabelConfig(_, opts) {
       { loose: true },
     ],
     [
-      require('@babel/plugin-proposal-nullish-coalescing-operator').default,
+      require('@babel/plugin-transform-optional-chaining').default,
+      { loose: true },
+    ],
+    [
+      require('@babel/plugin-transform-nullish-coalescing-operator').default,
+      { loose: true },
+    ],
+    [
+      require('@babel/plugin-transform-numeric-separator').default,
       { loose: true },
     ],
     [
