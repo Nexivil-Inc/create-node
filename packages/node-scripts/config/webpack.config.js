@@ -259,6 +259,10 @@ module.exports = webpackEnv => {
               },
             },
             {
+              test: /\.py$/i,
+              loader: require.resolve('../loaders/pythonLoader'),
+            },
+            {
               test: /\.worker\.(js|mjs)$/,
               use: [
                 {
