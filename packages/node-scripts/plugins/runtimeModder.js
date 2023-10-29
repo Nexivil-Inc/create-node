@@ -48,21 +48,25 @@ if(typeof ${RuntimeGlobals.require} !== "undefined") {
     const removeConditionNew = new RegExp(
       /(\w\.f\.j=.+\.push\([^)]+\);)(else if\(\/\^.+\$\/\.test\([^)]+\)[^;]+;)(else[^=]+=fetcher)/
     );
-    compiler.hooks.emit.tapAsync('ReplacePlugin', (compilation, callback) => {
-      Object.keys(compilation.assets).forEach(filename => {
-        if (filename === 'runtime.js') {
-          let source = compilation.assets[filename].source();
-          source = source.replace(removeConditionOld, '$1(true)$3');
-          source = source.replace(removeConditionNew, '$1$3');
+    compiler.hooks.compilation.tap('ReplacePlugin', compilation => {
+      const sources = compilation.compiler.webpack.sources;
+      compilation.hooks.processAssets.tap(
+        {
+          name: 'ReplacePlugin',
+          stage: compilation.PROCESS_ASSETS_STAGE_OPTIMIZE,
+        },
+        assets => {
+          Object.entries(assets).forEach(([pathname, source]) => {
+            if (pathname === 'runtime.js') {
+              let _src = source.source();
+              _src = _src.replace(removeConditionOld, '$1(true)$3');
+              _src = _src.replace(removeConditionNew, '$1$3');
 
-          compilation.assets[filename] = {
-            source: () => source,
-            size: () => source.length,
-          };
+              compilation.updateAsset(pathname, new sources.RawSource(_src));
+            }
+          });
         }
-      });
-
-      callback();
+      );
     });
   }
 }
