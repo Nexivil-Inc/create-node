@@ -1,6 +1,6 @@
 {
   "name": "@design-express/node-scripts",
-  "version": "1.1.5+2310300957",
+  "version": "1.1.6+2311021111",
   "description": "Design Express™ Fabrica node development Tools and Scripts",
   "engines": {
     "node": ">=16.0.0"
@@ -10,7 +10,8 @@
     "config",
     "scripts",
     "utils",
-    "plugins"
+    "plugins",
+    "loaders"
   ],
   "bin": {
     "node-scripts": "./bin/node-scripts.js"
