@@ -199,6 +199,7 @@ module.exports = webpackEnv => {
     },
     module: {
       strictExportPresence: true,
+      exprContextCritical: false,
       rules: [
         shouldUseSourceMap && {
           enforce: 'pre',
@@ -670,6 +671,7 @@ module.exports = webpackEnv => {
       // },
       fallback: {
         fs: false,
+        'node-fetch': false,
         stream: require.resolve('stream-browserify'),
         buffer: require.resolve('buffer/'),
         vm: require.resolve('vm-browserify'),
@@ -888,5 +890,8 @@ module.exports = webpackEnv => {
     },
     mode: isEnvProduction ? 'production' : 'development',
     devtool: isEnvProduction ? shouldUseSourceMap : 'eval',
+    stats: {
+      children: true,
+    },
   };
 };
