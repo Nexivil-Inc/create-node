@@ -45,8 +45,11 @@ if(typeof ${RuntimeGlobals.require} !== "undefined") {
     const removeConditionOld = new RegExp(
       /(\w\.f\.j=.+else if)(\(666!=t\))([^=]+=fetcher)/
     );
+    // const removeConditionNew = new RegExp(
+    //   /(\w\.f\.j=.+\.push\([^)]+\);)(else if\(\/\^.+\$\/\.test\([^)]+\)[^;]+;)(else[^=]+=fetcher)/
+    // );
     const removeConditionNew = new RegExp(
-      /(\w\.f\.j=.+\.push\([^)]+\);)(else if\(\/\^.+\$\/\.test\([^)]+\)[^;]+;)(else[^=]+=fetcher)/
+      /(\w\.f\.j=.+\.push\([^)]+\);)(else.*)(\{[^=]+=fetcher)/
     );
     compiler.hooks.compilation.tap('ReplacePlugin', compilation => {
       const sources = compilation.compiler.webpack.sources;
