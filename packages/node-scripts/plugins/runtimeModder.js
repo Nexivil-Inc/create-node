@@ -49,21 +49,21 @@ if(typeof ${RuntimeGlobals.require} !== "undefined") {
     //   /(\w\.f\.j=.+\.push\([^)]+\);)(else if\(\/\^.+\$\/\.test\([^)]+\)[^;]+;)(else[^=]+=fetcher)/
     // );
     const removeConditionNew = new RegExp(
-      /(\w\.f\.j=.+\.push\([^)]+\);)(else.*)(\{[^=]+=fetcher)/
+      /(\w\.f\.j=.+\.push\([^)]+\);)(else if.*)(\{[^=]+=fetcher)/
     );
     compiler.hooks.compilation.tap('ReplacePlugin', compilation => {
       const sources = compilation.compiler.webpack.sources;
-      compilation.hooks.processAssets.tap(
+      compilation.hooks.afterProcessAssets.tap(
         {
           name: 'ReplacePlugin',
-          stage: compilation.PROCESS_ASSETS_STAGE_OPTIMIZE,
+          // stage: compilation.PROCESS_ASSETS_STAGE_OPTIMIZE,
         },
         assets => {
           Object.entries(assets).forEach(([pathname, source]) => {
             if (pathname === 'runtime.js') {
               let _src = source.source();
               _src = _src.replace(removeConditionOld, '$1(true)$3');
-              _src = _src.replace(removeConditionNew, '$1$3');
+              _src = _src.replace(removeConditionNew, '$1else$3');
 
               compilation.updateAsset(pathname, new sources.RawSource(_src));
             }
