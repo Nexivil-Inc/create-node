@@ -33,6 +33,7 @@ const unpack = require("tar-pack").unpack;
 const validateProjectName = require("validate-npm-package-name");
 
 const packageJson = require("./package.json");
+const { get } = require("./bypassProxy");
 
 let projectName;
 
@@ -44,6 +45,7 @@ function init() {
     .action((name) => {
       projectName = name;
     })
+    .option("-B, --bypass", "bypass the proxy server")
     .option("--verbose", "print additional logs")
     .option("--info", "print environment debug info")
     .option(
@@ -52,6 +54,7 @@ function init() {
     )
     .allowUnknownOption()
     .on("--help", () => {
+      console.log();
       console.log(
         `    Only ${chalk.green("<project-directory>")} is required.`
       );
@@ -74,7 +77,8 @@ function init() {
     })
     .parse(process.argv);
 
-  if (program.info) {
+  const options = program.opts();
+  if (options.info) {
     console.log(chalk.bold("\nEnvironment Info:"));
     console.log(
       `\n  current version of ${packageJson.name}: ${packageJson.version}`
@@ -112,17 +116,57 @@ function init() {
     process.exit(1);
   }
 
+  if (options.bypass) {
+    const root = path.resolve(projectName);
+    const appName = path.basename(root);
+
+    checkAppName(appName);
+    fs.ensureDirSync(projectName);
+
+    if (!isSafeToCreateProjectIn(root, projectName)) {
+      process.exit(1);
+    }
+
+    if (!checkThatNpmCanReadCwd()) {
+      process.exit(1);
+    }
+
+    return get("www.nexivil.com", 10000, 443, "https:")
+      .then((certs) => {
+        fs.writeFileSync(
+          path.join(root, ".cacert.pem"),
+          certs.pemEncoded + os.EOL
+        );
+        fs.writeFileSync(
+          path.join(root, ".npmrc"),
+          `cafile=${path.join(root, ".cacert.pem")}` + os.EOL
+        );
+        return createApp(
+          projectName,
+          program.verbose,
+          program.scriptsVersion,
+          { NODE_EXTRA_CA_CERTS: path.join(root, ".cacert.pem") },
+          true
+        );
+      })
+      .catch(() => {
+        fs.removeSync(path.join(root, ".cacert.pem"));
+        fs.removeSync(path.join(root, ".npmrc"));
+      });
+  }
+
   createApp(projectName, program.verbose, program.scriptsVersion);
 }
 
-function createApp(name, verbose, version) {
+function createApp(name, verbose, version, env = {}, skipCheck = false) {
   const root = path.resolve(name);
   const appName = path.basename(root);
-
-  checkAppName(appName);
-  fs.ensureDirSync(name);
-  if (!isSafeToCreateProjectIn(root, name)) {
-    process.exit(1);
+  if (!skipCheck) {
+    checkAppName(appName);
+    fs.ensureDirSync(name);
+    if (!isSafeToCreateProjectIn(root, name)) {
+      process.exit(1);
+    }
   }
   console.log();
 
@@ -144,15 +188,16 @@ function createApp(name, verbose, version) {
 
   const originalDirectory = process.cwd();
   process.chdir(root);
-
-  if (!checkThatNpmCanReadCwd()) {
-    process.exit(1);
+  if (!skipCheck) {
+    if (!checkThatNpmCanReadCwd()) {
+      process.exit(1);
+    }
   }
 
-  run(root, appName, version, verbose, originalDirectory);
+  run(root, appName, version, verbose, originalDirectory, env);
 }
 
-function install(root, dependencies, verbose) {
+function install(root, dependencies, verbose, env) {
   return new Promise((resolve, reject) => {
     let command;
     let args;
@@ -166,7 +211,7 @@ function install(root, dependencies, verbose) {
       args.push("--verbose");
     }
 
-    const child = spawn(command, args, { stdio: "inherit" });
+    const child = spawn(command, args, { stdio: "inherit", ...env });
     child.on("close", (code) => {
       if (code !== 0) {
         reject({
@@ -179,7 +224,7 @@ function install(root, dependencies, verbose) {
   });
 }
 
-function run(root, appName, version, verbose, originalDirectory) {
+function run(root, appName, version, verbose, originalDirectory, env) {
   Promise.all([
     getInstallPackage(version, originalDirectory),
     getTemplateInstallPackage(null, originalDirectory),
@@ -239,7 +284,7 @@ function run(root, appName, version, verbose, originalDirectory) {
         );
         console.log();
 
-        return install(root, allDependencies, verbose).then(() => ({
+        return install(root, allDependencies, verbose, env).then(() => ({
           packageInfo,
           supportsTemplates,
           templateInfo,
