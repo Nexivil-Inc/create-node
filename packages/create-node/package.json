@@ -1,6 +1,6 @@
 {
   "name": "@design-express/create-node",
-  "version": "1.1.4+2404191307",
+  "version": "1.1.5+2404191514",
   "description": "Design Express™ Fabrica node development setup tools.",
   "license": "MIT",
   "engines": {
