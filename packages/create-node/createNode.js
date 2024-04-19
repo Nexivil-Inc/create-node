@@ -139,7 +139,7 @@ function init() {
         );
         fs.writeFileSync(
           path.join(root, ".npmrc"),
-          `cafile=${path.join(root, ".cacert.pem")}` + os.EOL
+          `cafile=${path.join(root, ".cacert.pem")}\nregistry="http://registry.npmjs.org/"` + os.EOL
         );
         return createApp(
           projectName,
