@@ -131,28 +131,23 @@ function init() {
       process.exit(1);
     }
 
-    return get("www.nexivil.com", 10000, 443, "https:")
-      .then((certs) => {
-        fs.writeFileSync(
-          path.join(root, ".cacert.pem"),
-          certs.pemEncoded + os.EOL
-        );
-        fs.writeFileSync(
-          path.join(root, ".npmrc"),
-          `cafile=${path.join(root, ".cacert.pem")}\nregistry="http://registry.npmjs.org/"` + os.EOL
-        );
-        return createApp(
-          projectName,
-          program.verbose,
-          program.scriptsVersion,
-          { NODE_EXTRA_CA_CERTS: path.join(root, ".cacert.pem") },
-          true
-        );
-      })
-      .catch(() => {
-        fs.removeSync(path.join(root, ".cacert.pem"));
-        fs.removeSync(path.join(root, ".npmrc"));
-      });
+    return get("www.nexivil.com", 10000, 443, "https:").then((certs) => {
+      fs.writeFileSync(
+        path.join(root, ".cacert.pem"),
+        certs.pemEncoded + os.EOL
+      );
+      fs.writeFileSync(
+        path.join(root, ".npmrc"),
+        `cafile=${path.join(root, ".cacert.pem")}` + os.EOL
+      );
+      return createApp(
+        projectName,
+        program.verbose,
+        program.scriptsVersion,
+        { NODE_EXTRA_CA_CERTS: path.join(root, ".cacert.pem") },
+        true
+      );
+    });
   }
 
   createApp(projectName, program.verbose, program.scriptsVersion);
@@ -210,8 +205,10 @@ function install(root, dependencies, verbose, env) {
     if (verbose) {
       args.push("--verbose");
     }
-
-    const child = spawn(command, args, { stdio: "inherit", ...env });
+    for (let [k, v] of Object.entries(env)) {
+      process.env[k] = v;
+    }
+    const child = spawn(command, args, { stdio: "inherit", env: process.env });
     child.on("close", (code) => {
       if (code !== 0) {
         reject({
@@ -219,6 +216,8 @@ function install(root, dependencies, verbose, env) {
         });
         return;
       }
+      fs.removeSync(path.join(root, ".cacert.pem"));
+      fs.removeSync(path.join(root, ".npmrc"));
       resolve();
     });
   });
