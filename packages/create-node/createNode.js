@@ -131,23 +131,32 @@ function init() {
       process.exit(1);
     }
 
-    return get("www.nexivil.com", 10000, 443, "https:").then((certs) => {
-      fs.writeFileSync(
-        path.join(root, ".cacert.pem"),
-        certs.pemEncoded + os.EOL
-      );
-      fs.writeFileSync(
-        path.join(root, ".npmrc"),
-        `cafile=${path.join(root, ".cacert.pem")}` + os.EOL
-      );
-      return createApp(
-        projectName,
-        program.verbose,
-        program.scriptsVersion,
-        { NODE_EXTRA_CA_CERTS: path.join(root, ".cacert.pem") },
-        true
-      );
-    });
+    return get("registry.npmjs.org", 10000, 443, "https:", true).then(
+      (certs) => {
+        fs.writeFileSync(
+          path.join(root, "cert.pem"),
+          certs.pemEncoded + os.EOL
+        );
+        fs.writeFileSync(
+          path.join(root, ".npmrc"),
+          `cafile=${path.join(root, "cert.pem")}` +
+            os.EOL +
+            `strict-ssl=false` +
+            os.EOL
+          // +"registry=http://registry.npmjs.org/"+os.EOL
+        );
+        return createApp(
+          projectName,
+          program.verbose,
+          program.scriptsVersion,
+          {
+            NODE_EXTRA_CA_CERTS: path.join(root, "cert.pem"),
+            NODE_TLS_REJECT_UNAUTHORIZED: 0,
+          },
+          true
+        );
+      }
+    );
   }
 
   createApp(projectName, program.verbose, program.scriptsVersion);
@@ -216,8 +225,6 @@ function install(root, dependencies, verbose, env) {
         });
         return;
       }
-      fs.removeSync(path.join(root, ".cacert.pem"));
-      fs.removeSync(path.join(root, ".npmrc"));
       resolve();
     });
   });
@@ -303,6 +310,7 @@ function run(root, appName, version, verbose, originalDirectory, env) {
           {
             cwd: process.cwd(),
             args: nodeArgs,
+            env: process.env,
           },
           [root, appName, verbose, originalDirectory, templateName],
           `
@@ -347,8 +355,14 @@ function run(root, appName, version, verbose, originalDirectory, env) {
           process.chdir(path.resolve(root, ".."));
           fs.removeSync(path.join(root));
         }
+        fs.removeSync(path.join(root, "cert.pem"));
+        fs.removeSync(path.join(root, ".npmrc"));
         console.log("Done.");
         process.exit(1);
+      })
+      .finally(() => {
+        fs.removeSync(path.join(root, "cert.pem"));
+        fs.removeSync(path.join(root, ".npmrc"));
       });
   });
 }
@@ -804,12 +818,12 @@ function checkThatNpmCanReadCwd() {
   return false;
 }
 
-function executeNodeScript({ cwd, args }, data, source) {
+function executeNodeScript({ cwd, args, env }, data, source) {
   return new Promise((resolve, reject) => {
     const child = spawn(
       process.execPath,
       [...args, "-e", source, "--", JSON.stringify(data)],
-      { cwd, stdio: "inherit" }
+      { cwd, stdio: "inherit", env: env }
     );
 
     child.on("close", (code) => {

@@ -1,4 +1,6 @@
+const { X509Certificate } = require("crypto");
 const https = require("https");
+const os = require("os");
 
 function isEmpty(object) {
   for (let prop in object) {
@@ -8,24 +10,36 @@ function isEmpty(object) {
   return true;
 }
 
-function pemEncode(str, n) {
-  const ret = [];
+// function pemEncode(str, n) {
+//   const ret = [];
 
-  for (let i = 1; i <= str.length; i++) {
-    ret.push(str[i - 1]);
-    const mod = i % n;
+//   for (let i = 1; i <= str.length; i++) {
+//     ret.push(str[i - 1]);
+//     const mod = i % n;
 
-    if (mod === 0) {
-      ret.push("\n");
-    }
-  }
+//     if (mod === 0) {
+//       ret.push("\n");
+//     }
+//   }
 
-  const returnString = `-----BEGIN CERTIFICATE-----\n${ret.join(
-    ""
-  )}\n-----END CERTIFICATE-----`;
+//   const returnString = `-----BEGIN CERTIFICATE-----\n${ret.join(
+//     ""
+//   )}\n-----END CERTIFICATE-----`;
 
-  return returnString;
-}
+//   return returnString;
+// }
+
+// function recusiveChainedCertificates(certs, chainedData, idx = 0) {
+//   if (idx < 2 && certs.issuerCertificate)
+//     return recusiveChainedCertificates(
+//       certs.issuerCertificate,
+//       chainedData +
+//         os.EOL +
+//         new X509Certificate(certs.issuerCertificate.raw).toString(),
+//       ++idx
+//     );
+//   return chainedData;
+// }
 
 function getOptions(url, port, protocol) {
   return {
@@ -52,10 +66,9 @@ function handleRequest(options, detailed = false, resolve, reject) {
       reject({ message: "The website did not provide a certificate" });
     } else {
       if (certificate.raw) {
-        certificate.pemEncoded = pemEncode(
-          certificate.raw.toString("base64"),
-          64
-        );
+        const _certificate = new X509Certificate(certificate.raw);
+
+        certificate.pemEncoded = _certificate.toString();
       }
       resolve(certificate);
     }
