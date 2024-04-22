@@ -32,10 +32,10 @@ const chokidar = require('chokidar');
 // const checkRequiredFiles = require('react-dev-utils/checkRequiredFiles');
 const {
   choosePort,
-  createCompiler,
   prepareProxy,
   prepareUrls,
 } = require('react-dev-utils/WebpackDevServerUtils');
+const { createCompiler } = require('../utils/webpackDevServerUtils');
 // const openBrowser = require('react-dev-utils/openBrowser');
 const semver = require('semver');
 const paths = require('../config/paths');
@@ -141,6 +141,7 @@ checkBrowsers(paths.appPath, isInteractive)
       appName,
       config,
       urls,
+      port,
       useYarn,
       useTypeScript,
       webpack,
@@ -156,7 +157,7 @@ checkBrowsers(paths.appPath, isInteractive)
     //     }
     //   }
     // });
-    compiler.hooks.compilation.tap('MyPlugin', comp => {
+    compiler.hooks.compilation.tap('MyPlugin', () => {
       // console.log(compilationParams);
       // if (!mod && comp.modifiedFiles) {
       //   for (let file of comp.modifiedFiles) {
@@ -236,7 +237,12 @@ checkBrowsers(paths.appPath, isInteractive)
           mod = false;
           clearTimeout(timer);
         });
-      // openBrowser(urls.localUrlForBrowser);
+
+      // if (urls.localUrlForTerminal) {
+      //   openBrowser(
+      //     `https://x.nexivil.com/nodes/connection/?link=${urls.localUrlForTerminal}`
+      //   ); //This will be connection gateway. (url물어보기)
+      // }
     });
 
     ['SIGINT', 'SIGTERM'].forEach(function (sig) {
