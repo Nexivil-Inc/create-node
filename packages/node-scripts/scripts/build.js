@@ -80,7 +80,7 @@ checkBrowsers(paths.appPath, isInteractive)
     // if you're in it, you don't end up in Trash
     fs.emptyDirSync(paths.appBuild);
     // Merge with the public folder
-    // copyPublicFolder();
+    // copyPublicFolder(appPackage);
     // Start the webpack build
     return build(previousFileSizes);
   })
@@ -157,10 +157,21 @@ function build(previousFileSizes) {
   config.entry = nodesPath;
 
   //enforce public path
+  const relPath = path.relative(paths.appPath, paths.appBuild);
+
+  if (relPath.startsWith('..')) {
+    console.log(
+      chalk.red(
+        'Failed to compile.\nYou attempted to set the "Build Path" outside of the project.'
+      )
+    );
+    process.exit(1);
+  }
+
   config.output.publicPath = path.posix.join(
     '/pkg/file',
     createHash('sha256').update(appPackage.name.replace('@', '')).digest('hex'),
-    path.basename(paths.appBuild) + '/'
+    'build/'
   );
 
   const compiler = webpack(config);
@@ -237,9 +248,18 @@ function build(previousFileSizes) {
   });
 }
 
-// function copyPublicFolder() {
-//   fs.copySync(paths.appPublic, paths.appBuild, {
+// function copyPublicFolder(packInfo) {
+//   const { readme } = packInfo;
+//   fs.copySync(paths.appPackageJson, path.join(paths.appBuild, 'package.json'), {
 //     dereference: true,
-//     filter: file => file !== paths.appHtml,
+//     filter: file => path.extname(file) === '.json',
 //   });
+//   if (!!readme && path.extname(readme).toLowerCase() === '.md')
+//     fs.copySync(
+//       path.join(paths.appPath, readme),
+//       path.join(paths.appBuild, 'readme.md'),
+//       {
+//         dereference: true,
+//       }
+//     );
 // }
