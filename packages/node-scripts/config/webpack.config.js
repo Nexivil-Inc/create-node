@@ -482,8 +482,15 @@ module.exports = webpackEnv => {
           const _runtimePath = manifestFiles['runtime.js'];
 
           return {
-            name: packinfo.name.replace('@', ''),
             xnodeVersion: '1.0.0',
+            name: packinfo.name.replace('@', ''),
+            version: packinfo.version,
+            license: packinfo.license,
+            summary: packinfo.summary,
+            description: packinfo.description,
+            keywords: packinfo.keywords,
+            sandbox: packinfo.sandbox,
+            readme: packinfo.readme,
             rootPath,
             files: manifestFiles,
             fileMap: Object.fromEntries(

@@ -6,7 +6,7 @@ const tar = require('tar');
 const fs = require('fs-extra');
 const path = require('path');
 const paths = require('../config/paths');
-const { basename } = require('path');
+
 // const { Writable } = require('stream');
 process.on('unhandledRejection', err => {
   throw err;
@@ -68,10 +68,30 @@ function packList() {
       //       cb();
       //     },
       //   });
+      const packEntries = [path.relative(paths.appPath, paths.appBuild)];
+
+      if (
+        packInfo.readme &&
+        fs.existsSync(path.join(paths.appPath, packInfo.readme))
+      ) {
+        packEntries.push(
+          path.relative(
+            paths.appPath,
+            path.join(paths.appPath, packInfo.readme)
+          )
+        );
+      }
+
       tar
         .c(
-          { gzip: false, portable: true, noMtime: true, preservePaths: false },
-          [basename(paths.appBuild)]
+          {
+            gzip: false,
+            portable: true,
+            noMtime: true,
+            preservePaths: false,
+            cwd: paths.appPath,
+          },
+          packEntries
         )
         .pipe(second_compress)
         .pipe(sink);
