@@ -1,6 +1,6 @@
 {
   "name": "@design-express/node-scripts",
-  "version": "1.1.11+2405292011",
+  "version": "1.2.0+2408281506",
   "description": "Design Express™ Fabrica node development Tools and Scripts",
   "engines": {
     "node": ">=16.0.0"
@@ -20,6 +20,7 @@
   "license": "MIT",
   "dependencies": {
     "@babel/core": "^7.22.10",
+    "@babel/eslint-parser": "^7.22.15",
     "@babel/node": "^7.22.10",
     "@babel/plugin-transform-class-properties": "^7.22.5",
     "@babel/plugin-transform-nullish-coalescing-operator": "^7.22.11",
@@ -27,8 +28,8 @@
     "@babel/plugin-transform-object-assign": "^7.22.5",
     "@babel/plugin-transform-object-rest-spread": "^7.22.15",
     "@babel/plugin-transform-optional-chaining": "^7.23.0",
-    "@babel/plugin-transform-private-property-in-object": "7.22.11",
     "@babel/plugin-transform-private-methods": "^7.22.5",
+    "@babel/plugin-transform-private-property-in-object": "7.22.11",
     "@babel/plugin-transform-react-constant-elements": "^7.22.5",
     "@babel/plugin-transform-runtime": "^7.22.10",
     "@babel/preset-env": "^7.22.14",
@@ -36,10 +37,10 @@
     "@babel/preset-typescript": "^7.22.11",
     "@babel/register": "^7.22.5",
     "@liradb2000/babel-plugin-transform-globals": "^1.0.6",
+    "@liradb2000/worker-loader": "^3.1.0",
     "@liradb2000/zstd-codec": "^0.1.4",
     "@pmmmwh/react-refresh-webpack-plugin": "^0.5.11",
     "@svgr/webpack": "^8.1.0",
-    "@babel/eslint-parser": "^7.22.15",
     "babel-loader": "^9.1.3",
     "babel-plugin-annotate-pure-calls": "^0.4.0",
     "babel-plugin-istanbul": "^6.1.1",
@@ -91,7 +92,6 @@
     "webpack-cli": "^5.1.4",
     "webpack-dev-server": "^4.15.1",
     "webpack-manifest-plugin": "^5.0.0",
-    "webpack-virtual-modules": "^0.5.0",
-    "worker-loader": "^3.0.8"
+    "webpack-virtual-modules": "^0.5.0"
   }
 }
