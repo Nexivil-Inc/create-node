@@ -176,7 +176,7 @@ function build(previousFileSizes) {
         .digest('hex'),
       'build/'
     ),
-    process.env.PUBLIC_URL ?? 'https://x.nexivil.com'
+    process.env.CHUNK_REQUEST_URL ?? 'https://x.nexivil.com'
   ).toString();
 
   const compiler = webpack(config);
