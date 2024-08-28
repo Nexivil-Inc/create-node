@@ -175,7 +175,8 @@ function build(previousFileSizes) {
         .update(appPackage.name.replace('@', ''))
         .digest('hex'),
       'build/'
-    ),"https://x.nexivil.com"
+    ),
+    process.env.PUBLIC_URL ?? 'https://x.nexivil.com'
   ).toString();
 
   const compiler = webpack(config);

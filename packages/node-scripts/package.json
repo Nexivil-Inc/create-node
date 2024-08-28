@@ -1,6 +1,6 @@
 {
   "name": "@design-express/node-scripts",
-  "version": "1.2.0+2408281506",
+  "version": "1.2.0+2408281539",
   "description": "Design Express™ Fabrica node development Tools and Scripts",
   "engines": {
     "node": ">=16.0.0"
@@ -63,6 +63,7 @@
     "cross-spawn": "^7.0.3",
     "css-loader": "^6.8.1",
     "css-minimizer-webpack-plugin": "^5.0.1",
+    "dotenv-expand": "^11.0.6",
     "eslint-config-react-app": "^7.0.1",
     "file-loader": "^6.2.0",
     "form-data": "^4.0.0",
