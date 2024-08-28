@@ -168,11 +168,15 @@ function build(previousFileSizes) {
     process.exit(1);
   }
 
-  config.output.publicPath = path.posix.join(
-    '/pkg/file',
-    createHash('sha256').update(appPackage.name.replace('@', '')).digest('hex'),
-    'build/'
-  );
+  config.output.publicPath = new URL(
+    path.posix.join(
+      '/pkg/file',
+      createHash('sha256')
+        .update(appPackage.name.replace('@', ''))
+        .digest('hex'),
+      'build/'
+    ),"https://x.nexivil.com"
+  ).toString();
 
   const compiler = webpack(config);
   return new Promise((resolve, reject) => {

@@ -267,7 +267,7 @@ module.exports = webpackEnv => {
               test: /\.worker\.(js|mjs)$/,
               use: [
                 {
-                  loader: require.resolve('worker-loader'),
+                  loader: require.resolve('@liradb2000/worker-loader'),
                   options: {
                     inline: 'fallback',
                     filename: 'chunks/[name].[contenthash:8].js',
@@ -438,7 +438,13 @@ module.exports = webpackEnv => {
         shouldUseReactRefresh &&
         new DefinePlugin({
           'process.env.NXV_NODE_NAME': `"${packinfo.name}"`,
+          // __webpack_public_path__: '/test.local/',
         }),
+      // isEnvProduction &&
+      //   new DefinePlugin({
+      //     __webpack_public_path__: 'x.nexivil.com',
+
+      //   }),
       // Watcher doesn't work well if you mistype casing in a path so we use
       // a plugin that prints an error when you attempt to do this.
       // See https://github.com/facebook/create-react-app/issues/240
@@ -527,18 +533,19 @@ module.exports = webpackEnv => {
         },
       }),
       new StatsWriterPlugin({
-        stats: ['chunks', 'entrypoints'],
+        stats: ['chunks', 'entrypoints', 'children'],
         transform(data) {
           try {
             const chunks = data.chunks;
-            const entrypoints = data.entrypoints;
-            const runtimeChunk = chunks.find(
-              ({ initial, entry, runtime, files }) =>
+            const children = data.children;
+            if (children) chunks.push(...children.map(i => i.chunks).flat());
+
+            const entrypoints = chunks.filter(
+              ({ initial, runtime, files }) =>
                 initial &&
-                entry &&
-                runtime[0] === 'runtime' &&
-                files[0] === 'runtime.js'
+                !(runtime[0] == 'runtime' && files[0] === 'runtime.js')
             );
+
             const refinedChunks = chunks.reduce(
               (
                 collector,
@@ -550,23 +557,27 @@ module.exports = webpackEnv => {
                   auxiliaryFiles,
                   id,
                   parents,
+                  runtime,
                   children,
                 }
               ) => {
-                if (collector.has(id))
-                  throw new Error(
-                    "'ID' is duplicated! \n This is the '@design/express/node-scripts' bug."
-                  );
-                collector.set(id, {
-                  initial,
-                  entry,
-                  names,
-                  files,
-                  auxiliaryFiles,
-                  id,
-                  parents,
-                  children,
-                });
+                for (let _runtime of runtime) {
+                  if (collector.has(`${_runtime}::${id}`))
+                    throw new Error(
+                      `'ID : ${_runtime}::${id}' is duplicated! \n This is the '@design/express/node-scripts' bug.`
+                    );
+                  collector.set(`${_runtime}::${id}`, {
+                    initial,
+                    entry,
+                    names,
+                    files,
+                    auxiliaryFiles,
+                    id,
+                    parents,
+                    runtime,
+                    children,
+                  });
+                }
                 return collector;
               },
               new Map()
@@ -582,27 +593,32 @@ module.exports = webpackEnv => {
                 files = [],
                 auxiliaryFiles = [],
                 children = [],
+                runtime = [],
               } = refinedChunks.get(id);
 
               const _dependencies = [...files];
               const _assets = [...auxiliaryFiles];
 
               if (children?.length > 0) {
-                for (let childID of children) {
-                  if (ancestor.has(childID)) {
-                    const ancestorArr = [...ancestor];
-                    _circularDependency.set(
-                      childID,
-                      ancestorArr.slice(ancestorArr.indexOf(childID))
-                    );
-                    continue;
-                  } else {
-                    const { chunks, assets } = injectDependecyInfo(
-                      childID,
-                      new Set([...ancestor, childID])
-                    );
-                    _dependencies.push(...chunks);
-                    _assets.push(...assets);
+                for (let _runtime of runtime) {
+                  for (let childID of children) {
+                    if (ancestor.has(`${_runtime}::${childID}`)) {
+                      const ancestorArr = [...ancestor];
+                      _circularDependency.set(
+                        `${_runtime}::${childID}`,
+                        ancestorArr.slice(
+                          ancestorArr.indexOf(`${_runtime}::${childID}`)
+                        )
+                      );
+                      continue;
+                    } else {
+                      const { chunks, assets } = injectDependecyInfo(
+                        `${_runtime}::${childID}`,
+                        new Set([...ancestor, `${_runtime}::${childID}`])
+                      );
+                      _dependencies.push(...chunks);
+                      _assets.push(...assets);
+                    }
                   }
                 }
               }
@@ -625,27 +641,24 @@ module.exports = webpackEnv => {
             }
 
             return JSON.stringify(
-              Object.values(entrypoints).reduce(
-                (collector, { name, chunks: chunkIds }) => {
-                  const _chunks = [];
-                  const _assets = [];
-                  for (let id of chunkIds) {
-                    if (id === runtimeChunk.id) continue;
-                    const { chunks, assets } = injectDependecyInfo(
-                      id,
-                      new Set([id])
-                    );
-                    _chunks.push(...chunks);
-                    _assets.push(...assets);
-                  }
-                  collector[name] = {
-                    chunks: [...new Set(_chunks)].map(p => join(rootPath, p)),
-                    assets: [...new Set(_assets)].map(p => join(rootPath, p)),
-                  };
-                  return collector;
-                },
-                {}
-              )
+              entrypoints.reduce((collector, { names, runtime, id }) => {
+                const _chunks = [];
+                const _assets = [];
+                for (let _runtime of runtime) {
+                  const { chunks, assets } = injectDependecyInfo(
+                    `${_runtime}::${id}`,
+                    new Set([`${_runtime}::${id}`])
+                  );
+                  _chunks.push(...chunks);
+                  _assets.push(...assets);
+                }
+
+                collector[names[0]] = {
+                  chunks: [...new Set(_chunks)].map(p => join(rootPath, p)),
+                  assets: [...new Set(_assets)].map(p => join(rootPath, p)),
+                };
+                return collector;
+              }, {})
             );
           } catch (e) {
             console.error(e);
