@@ -681,7 +681,24 @@ module.exports = webpackEnv => {
         rules: [
           {
             applyStage: 'optimizeChunkAssets',
-            outputFileInclude: /\.js$/,
+            outputFileInclude:
+              /^(?!.+\/\w{20}\.worker\.js$)(?!.+\.worker\.\w{8}\.js$).+\.js$/,
+            replacements: [
+              {
+                pattern: /["']__WEBPACK_DEFINE_PUBLIC_PATH__["']/,
+                replacement: `new URL("${join(
+                  '/pkg/file',
+                  createHash('sha256')
+                    .update(packinfo.name.replace('@', ''))
+                    .digest('hex'),
+                  'build/'
+                )}", window.location.origin).toString()`,
+              },
+            ],
+          },
+          {
+            applyStage: 'optimizeChunkAssets',
+            outputFileInclude: /^.+(?:\/\w{20}\.worker|\.worker\.\w{8})\.js$/,
             replacements: [
               {
                 pattern: /["']__WEBPACK_DEFINE_PUBLIC_PATH__["']/,
@@ -692,6 +709,10 @@ module.exports = webpackEnv => {
                     .digest('hex'),
                   'build/'
                 )}", globalThis.location.origin).toString()`,
+              },
+              {
+                pattern: /\bwindow\b/,
+                replacement: 'globalThis',
               },
             ],
           },
