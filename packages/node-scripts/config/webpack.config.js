@@ -5,6 +5,8 @@
  */
 const { basename } = require('path');
 const { join } = require('path/posix');
+const { createHash } = require('crypto');
+
 const paths = require('../config/paths');
 const modules = require('./modules');
 
@@ -35,6 +37,7 @@ const getCacheIdentifier = require('react-dev-utils/getCacheIdentifier');
 const StatsWriterPlugin = require('../plugins/webpackStatsPlugin');
 const RuntimeModder = require('../plugins/runtimeModder');
 const RuntimeRequirementModder = require('../plugins/runtimeRequirementModder');
+const WebpackStringReplacer = require('webpack-string-replacer');
 const packinfo = require(paths.appPackageJson);
 
 const cssRegex = /\.css$/;
@@ -673,6 +676,26 @@ module.exports = webpackEnv => {
       new IgnorePlugin({
         resourceRegExp: /^\.\/locale$/,
         contextRegExp: /moment$/,
+      }),
+      new WebpackStringReplacer({
+        rules: [
+          {
+            applyStage: 'optimizeChunkAssets',
+            outputFileInclude: /\.js$/,
+            replacements: [
+              {
+                pattern: /["']__WEBPACK_DEFINE_PUBLIC_PATH__["']/,
+                replacement: `new URL("${join(
+                  '/pkg/file',
+                  createHash('sha256')
+                    .update(packinfo.name.replace('@', ''))
+                    .digest('hex'),
+                  'build/'
+                )}", globalThis.location.origin).toString()`,
+              },
+            ],
+          },
+        ],
       }),
     ].filter(Boolean),
     resolve: {

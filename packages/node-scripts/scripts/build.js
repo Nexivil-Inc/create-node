@@ -68,7 +68,6 @@ const { getFileList } = require('../utils/getFiles');
 // We require that you explicitly set browsers and do not fall back to
 // browserslist defaults.
 const { checkBrowsers } = require('react-dev-utils/browsersHelper');
-const { createHash } = require('crypto');
 checkBrowsers(paths.appPath, isInteractive)
   .then(() => {
     // First, read the current file sizes in build directory.
@@ -168,16 +167,7 @@ function build(previousFileSizes) {
     process.exit(1);
   }
 
-  config.output.publicPath = new URL(
-    path.posix.join(
-      '/pkg/file',
-      createHash('sha256')
-        .update(appPackage.name.replace('@', ''))
-        .digest('hex'),
-      'build/'
-    ),
-    process.env.CHUNK_REQUEST_URL ?? 'https://x.nexivil.com'
-  ).toString();
+  config.output.publicPath = '__WEBPACK_DEFINE_PUBLIC_PATH__';
 
   const compiler = webpack(config);
   return new Promise((resolve, reject) => {
