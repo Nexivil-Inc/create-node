@@ -685,7 +685,7 @@ module.exports = webpackEnv => {
               /^(?!.+\/\w{20}\.worker\.js$)(?!.+\.worker\.\w{8}\.js$).+\.js$/,
             replacements: [
               {
-                pattern: /["']__WEBPACK_DEFINE_PUBLIC_PATH__["']/,
+                pattern: /["'`]__WEBPACK_DEFINE_PUBLIC_PATH__["'`]/,
                 replacement: `new URL("${join(
                   '/pkg/file',
                   createHash('sha256')
@@ -701,7 +701,7 @@ module.exports = webpackEnv => {
             outputFileInclude: /^.+(?:\/\w{20}\.worker|\.worker\.\w{8})\.js$/,
             replacements: [
               {
-                pattern: /["']__WEBPACK_DEFINE_PUBLIC_PATH__["']/,
+                pattern: /["'`]__WEBPACK_DEFINE_PUBLIC_PATH__["'`]/,
                 replacement: `new URL("${join(
                   '/pkg/file',
                   createHash('sha256')
