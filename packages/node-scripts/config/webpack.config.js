@@ -267,7 +267,7 @@ module.exports = webpackEnv => {
               loader: require.resolve('../loaders/pythonLoader'),
             },
             {
-              test: /\.worker\.(js|jsx|mjs)$/,
+              test: /\.worker\.(js|mjs)$/,
               use: [
                 {
                   loader: require.resolve('@liradb2000/worker-loader'),
@@ -281,7 +281,7 @@ module.exports = webpackEnv => {
             },
             {
               ...babelLoaderConfig,
-              test: /\.(js|mjs)$/,
+              test: /\.(js|jsx|mjs)$/,
               exclude: [
                 /node_modules/,
                 /@babel(?:\/|\\{1,2})runtime/,
