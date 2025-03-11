@@ -273,7 +273,7 @@ module.exports = webpackEnv => {
                   loader: require.resolve('@liradb2000/worker-loader'),
                   options: {
                     inline: 'fallback',
-                    filename: 'chunks/[name].[contenthash:8].js',
+                    filename: 'chunks/[name].[contenthash:8].wjs',
                   },
                 },
                 workerBabelConfig,
@@ -565,10 +565,28 @@ module.exports = webpackEnv => {
                 }
               ) => {
                 for (let _runtime of runtime) {
-                  if (collector.has(`${_runtime}::${id}`))
-                    throw new Error(
+                  if (collector.has(`${_runtime}::${id}`)) {
+                    const merged = collector.get(`${_runtime}::${id}`);
+                    merged.initial = merged.initia || initial;
+                    merged.entry = merged.entry || entry;
+                    merged.names = [...new Set([...merged.names, ...names])];
+                    merged.files = [...new Set([...merged.files, ...files])];
+                    merged.auxiliaryFiles = [
+                      ...new Set([...merged.auxiliaryFiles, ...auxiliaryFiles]),
+                    ];
+                    merged.parents = [
+                      ...new Set([...merged.parents, ...parents]),
+                    ];
+                    merged.runtime = [
+                      ...new Set([...merged.runtime, ...runtime]),
+                    ];
+                    merged.children = [
+                      ...new Set([...merged.children, ...children]),
+                    ];
+                    console.warn(
                       `'ID : ${_runtime}::${id}' is duplicated! \n This is the '@design/express/node-scripts' bug.`
                     );
+                  }
                   collector.set(`${_runtime}::${id}`, {
                     initial,
                     entry,
@@ -682,7 +700,7 @@ module.exports = webpackEnv => {
           {
             applyStage: 'optimizeChunkAssets',
             outputFileInclude:
-              /^(?!.+\/\w{20}\.worker\.js$)(?!.+\.worker\.\w{8}\.js$).+\.js$/,
+              /^(?!.+\/\w{20}\.worker\.wjs$)(?!.+\.worker\.\w{8}\.wjs$).+\.js$/,
             replacements: [
               {
                 pattern: /["'`]__WEBPACK_DEFINE_PUBLIC_PATH__["'`]/,
@@ -698,7 +716,7 @@ module.exports = webpackEnv => {
           },
           {
             applyStage: 'optimizeChunkAssets',
-            outputFileInclude: /^.+(?:\/\w{20}\.worker|\.worker\.\w{8})\.js$/,
+            outputFileInclude: /^.+(?:\/\w{20}\.worker|\.worker\.\w{8})\.wjs$/,
             replacements: [
               {
                 pattern: /["'`]__WEBPACK_DEFINE_PUBLIC_PATH__["'`]/,
