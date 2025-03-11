@@ -1,6 +1,6 @@
 {
   "name": "@design-express/node-scripts",
-  "version": "1.2.7+2501131032",
+  "version": "1.2.7+2503120435",
   "description": "Design Express™ Fabrica node development Tools and Scripts",
   "engines": {
     "node": ">=16.0.0"
@@ -37,7 +37,7 @@
     "@babel/preset-typescript": "^7.22.11",
     "@babel/register": "^7.22.5",
     "@liradb2000/babel-plugin-transform-globals": "^1.0.6",
-    "@liradb2000/worker-loader": "^3.1.0",
+    "@liradb2000/worker-loader": "^3.1.1",
     "@liradb2000/zstd-codec": "^0.1.4",
     "@pmmmwh/react-refresh-webpack-plugin": "^0.5.11",
     "@svgr/webpack": "^8.1.0",
