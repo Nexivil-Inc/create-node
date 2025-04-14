@@ -37,7 +37,7 @@
     "@babel/preset-typescript": "^7.22.11",
     "@babel/register": "^7.22.5",
     "@liradb2000/babel-plugin-transform-globals": "^1.0.6",
-    "@liradb2000/worker-loader": "^3.1.1",
+    "@liradb2000/worker-loader": "^3.1.2",
     "@liradb2000/zstd-codec": "^0.1.4",
     "@pmmmwh/react-refresh-webpack-plugin": "^0.5.11",
     "@svgr/webpack": "^8.1.0",
