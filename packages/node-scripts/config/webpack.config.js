@@ -273,6 +273,7 @@ module.exports = webpackEnv => {
                   loader: require.resolve('@liradb2000/worker-loader'),
                   options: {
                     inline: 'fallback',
+                    forceInline: isEnvDevelopment,
                     filename: 'chunks/[name].[contenthash:8].wjs',
                   },
                 },
