@@ -49,7 +49,7 @@ if(typeof ${RuntimeGlobals.require} !== "undefined") {
     //   /(\w\.f\.j=.+\.push\([^)]+\);)(else if\(\/\^.+\$\/\.test\([^)]+\)[^;]+;)(else[^=]+=fetcher)/
     // );
     const removeConditionNew = new RegExp(
-      /(\w\.f\.j=.+\.push\([^)]+\);)(else if.*)(\{[^=]+=fetcher)/
+      /(\w\.f\.j=.+\.push\([^)]+\);)(else if.*)(\{[^=]+=fetcher)\((.*)"\.\/"\+/
     );
     const removeImportMeta = new RegExp(/new URL\([^,]+,\s*import\.meta\.url\)/);
 
@@ -65,7 +65,7 @@ if(typeof ${RuntimeGlobals.require} !== "undefined") {
             if (pathname === 'runtime.js') {
               let _src = source.source();
               _src = _src.replace(removeConditionOld, '$1(true)$3');
-              _src = _src.replace(removeConditionNew, '$1else$3');
+              _src = _src.replace(removeConditionNew, '$1else$3("./"+');
               _src = _src.replace(removeImportMeta, '""');
 
               compilation.updateAsset(pathname, new sources.RawSource(_src));
