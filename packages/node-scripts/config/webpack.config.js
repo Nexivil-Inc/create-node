@@ -730,8 +730,8 @@ module.exports = webpackEnv => {
                 )}", globalThis.location.origin).toString()`,
               },
               {
-                pattern: /\bwindow\b/,
-                replacement: 'globalThis',
+                pattern: /(\b|\\t|\\n)window(\b|\\t|\\n)/,
+                replacement: (_,$1,$2)=>`${$1}globalThis${$2}`,
               },
             ],
           },
