@@ -43,7 +43,7 @@ if(typeof ${RuntimeGlobals.require} !== "undefined") {
     }
 
     const removeConditionOld = new RegExp(
-      /(\w\.f\.j=.+else if)(\(666!=t\))([^=]+=fetcher)/
+      /(\w\.f\.j=.+else if)(\(\d{3}!=t\))([^=]+=fetcher)/
     );
     // const removeConditionNew = new RegExp(
     //   /(\w\.f\.j=.+\.push\([^)]+\);)(else if\(\/\^.+\$\/\.test\([^)]+\)[^;]+;)(else[^=]+=fetcher)/
@@ -52,6 +52,8 @@ if(typeof ${RuntimeGlobals.require} !== "undefined") {
       /(\w\.f\.j=.+\.push\([^)]+\);)(else if.*)(\{[^=]+=fetcher)\((.*)"\.\/"\+/
     );
     const removeImportMeta = new RegExp(/new URL\([^,]+,\s*import\.meta\.url\)/);
+
+    const replaceRelative = new RegExp(/=fetcher\((\w\.\w)\+/)
 
     compiler.hooks.compilation.tap('ReplacePlugin', compilation => {
       const sources = compilation.compiler.webpack.sources;
@@ -64,6 +66,7 @@ if(typeof ${RuntimeGlobals.require} !== "undefined") {
           Object.entries(assets).forEach(([pathname, source]) => {
             if (pathname === 'runtime.js') {
               let _src = source.source();
+              _src = _src.replace(replaceRelative, '=fetcher("./"+');
               _src = _src.replace(removeConditionOld, '$1(true)$3');
               _src = _src.replace(removeConditionNew, '$1else$3("./"+');
               _src = _src.replace(removeImportMeta, '""');
