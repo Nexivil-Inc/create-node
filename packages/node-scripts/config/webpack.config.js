@@ -144,6 +144,7 @@ module.exports = webpackEnv => {
           loader: require.resolve(preProcessor),
           options: {
             sourceMap: true,
+            ...(preProcessor === 'sass-loader' ? { api: 'modern' } : {}),
           },
         }
       );
@@ -731,7 +732,7 @@ module.exports = webpackEnv => {
               },
               {
                 pattern: /(\b|\\t|\\n)window(\b|\\t|\\n)/,
-                replacement: (_,$1,$2)=>`${$1}globalThis${$2}`,
+                replacement: (_, $1, $2) => `${$1}globalThis${$2}`,
               },
             ],
           },
