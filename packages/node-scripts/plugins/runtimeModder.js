@@ -58,6 +58,7 @@ if(typeof ${RuntimeGlobals.require} !== "undefined") {
     const replaceRelative = new RegExp(/=fetcher\((\w\.\w)\+/);
 
     const renameWebpackRel = new RegExp(/\.__webpack_[^_]+_([^_]+)__/gm);
+    const renameWebpackESMRel = new RegExp(/__webpack_[^_]+_([^_]+)__:/gm);
 
     compiler.hooks.compilation.tap('ReplacePlugin', compilation => {
       const sources = compilation.compiler.webpack.sources;
@@ -75,6 +76,8 @@ if(typeof ${RuntimeGlobals.require} !== "undefined") {
               _src = _src.replace(removeConditionNew, '$1else$3("./"+');
               _src = _src.replace(removeImportMeta, '""');
               _src = _src.replaceAll(renameWebpackRel, '.__webpack_$1__');
+              _src = _src.replaceAll(renameWebpackESMRel, '__webpack_$1__:');
+
 
               compilation.updateAsset(pathname, new sources.RawSource(_src));
             }
