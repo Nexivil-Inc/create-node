@@ -78,6 +78,12 @@ module.exports = function getBabelConfig(_, opts) {
     true
   );
 
+  const useReactPreset = validateBoolOption(
+    'reactPreset',
+    opts.reactPreset,
+    false
+  );
+
   let absoluteRuntimePath = undefined;
   if (useAbsoluteRuntime) {
     absoluteRuntimePath = path.dirname(
@@ -110,7 +116,7 @@ module.exports = function getBabelConfig(_, opts) {
         // browserslistEnv: 'last 1 chrome version',
       },
     ],
-    [
+    useReactPreset && [
       require('@babel/preset-react').default,
       {
         // Adds component stack to warning messages
@@ -192,13 +198,14 @@ module.exports = function getBabelConfig(_, opts) {
         absoluteRuntime: absoluteRuntimePath,
       },
     ],
-    [
+    useReactPreset && [
       require('babel-plugin-transform-react-remove-prop-types').default,
       {
         mode: 'unsafe-wrap',
       },
     ],
-    isEnvDevelopment &&
+    useReactPreset &&
+      isEnvDevelopment &&
       shouldUseReactRefresh &&
       require.resolve('react-refresh/babel'),
     require('babel-plugin-annotate-pure-calls').default,
@@ -224,13 +231,13 @@ module.exports = function getBabelConfig(_, opts) {
     presets,
     plugins,
     overrides: [
-      {
+      useReactPreset && {
         exclude: /\.test\.(js|ts|tsx)$/,
         plugins: [
           require('@babel/plugin-transform-react-constant-elements').default,
         ],
       },
-    ],
+    ].filter(Boolean),
     env: {
       coverage: {
         plugins: [

@@ -153,13 +153,12 @@ module.exports = webpackEnv => {
   };
 
   const shouldUseReactRefresh = process.env.FAST_REFRESH !== 'false';
-  const babelLoaderConfig = {
+  const baseBabelLoaderConfig = {
     loader: require.resolve('babel-loader'),
     options: {
       babelrc: false,
       configFile: false,
       compact: false,
-      presets: [require.resolve('./babel.config')],
       cacheDirectory: true,
       cacheCompression: false,
       cacheIdentifier: getCacheIdentifier(
@@ -175,12 +174,29 @@ module.exports = webpackEnv => {
       inputSourceMap: shouldUseSourceMap,
     },
   };
-  const workerBabelConfig = {
-    loader: babelLoaderConfig.loader,
+  const jsxBabelLoaderConfig = {
+    loader: baseBabelLoaderConfig.loader,
     options: {
-      ...babelLoaderConfig.options,
+      ...baseBabelLoaderConfig.options,
+      presets: [[require.resolve('./babel.config'), { useReactPreset: true }]],
+    },
+  };
+  const nonJsxBabelLoaderConfig = {
+    loader: baseBabelLoaderConfig.loader,
+    options: {
+      ...baseBabelLoaderConfig.options,
+      presets: [[require.resolve('./babel.config'), { useReactPreset: false }]],
+    },
+  };
+  const workerBabelConfig = {
+    loader: baseBabelLoaderConfig.loader,
+    options: {
+      ...baseBabelLoaderConfig.options,
       presets: [
-        [require.resolve('./babel.config'), { globalKey: 'globalThis' }],
+        [
+          require.resolve('./babel.config'),
+          { globalKey: 'globalThis', useReactPreset: false },
+        ],
       ],
     },
   };
@@ -282,8 +298,17 @@ module.exports = webpackEnv => {
               ],
             },
             {
-              ...babelLoaderConfig,
-              test: /\.(js|jsx|mjs)$/,
+              ...jsxBabelLoaderConfig,
+              test: /\.(jsx)$/,
+              exclude: [
+                /node_modules/,
+                /@babel(?:\/|\\{1,2})runtime/,
+                /\.worker\.(js|mjs)$/,
+              ],
+            },
+            {
+              ...nonJsxBabelLoaderConfig,
+              test: /\.(js|mjs)$/,
               exclude: [
                 /node_modules/,
                 /@babel(?:\/|\\{1,2})runtime/,
