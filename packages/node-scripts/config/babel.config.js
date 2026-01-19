@@ -81,7 +81,7 @@ module.exports = function getBabelConfig(_, opts) {
   const useReactPreset = validateBoolOption(
     'reactPreset',
     opts.reactPreset,
-    false
+    true
   );
 
   let absoluteRuntimePath = undefined;
