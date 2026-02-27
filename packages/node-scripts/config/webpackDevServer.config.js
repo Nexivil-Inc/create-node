@@ -100,7 +100,7 @@ module.exports = function (proxy, allowedHost) {
       publicPath: paths.publicUrlOrPath.slice(0, -1),
     },
     // liveReload: false,
-    https: getHttpsConfig(),
+    ...getHttpsConfig(),
     host,
     historyApiFallback: {
       // Paths with dots should still use the history fallback.
