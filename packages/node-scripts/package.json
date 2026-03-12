@@ -1,9 +1,9 @@
 {
   "name": "@design-express/node-scripts",
-  "version": "2.0.0+02280112",
+  "version": "2.0.1+03121051",
   "description": "Design Express™ Fabrica node development Tools and Scripts",
   "engines": {
-    "node": ">=18.0.0"
+    "node": ">=20.9.0"
   },
   "files": [
     "bin",
@@ -58,11 +58,11 @@
     "cbor-x": "^1.5.4",
     "chalk": "^4.1.2",
     "constants-browserify": "^1.0.0",
-    "copy-webpack-plugin": "^11.0.0",
+    "copy-webpack-plugin": "^14.0.0",
     "cors": "^2.8.5",
     "cross-spawn": "^7.0.6",
     "css-loader": "^6.8.1",
-    "css-minimizer-webpack-plugin": "^5.0.1",
+    "css-minimizer-webpack-plugin": "^8.0.0",
     "dotenv-expand": "^11.0.6",
     "eslint-config-react-app": "^7.0.1",
     "file-loader": "^6.2.0",
@@ -86,7 +86,7 @@
     "stream-browserify": "^3.0.0",
     "style-loader": "^3.3.3",
     "svg-inline-loader": "^0.8.2",
-    "tar": "^7.5.9",
+    "tar": "^7.5.11",
     "url": "^0.11.4",
     "util": "^0.12.5",
     "vm-browserify": "^1.1.2",
