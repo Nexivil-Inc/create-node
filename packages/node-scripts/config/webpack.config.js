@@ -11,7 +11,13 @@ const paths = require('../config/paths');
 const modules = require('./modules');
 
 const { ProvidePlugin, IgnorePlugin, DefinePlugin } = require('webpack');
-const TerserPlugin = require('terser-webpack-plugin');
+const TerserPlugin = (function () {
+  try {
+    return require('terser-webpack-plugin');
+  } catch {
+    return require('minimizer-webpack-plugin');
+  }
+})();
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const CssMinimizerPlugin = require('css-minimizer-webpack-plugin');
 const CaseSensitivePathsPlugin = require('case-sensitive-paths-webpack-plugin');
@@ -20,7 +26,7 @@ const { WebpackManifestPlugin } = require('webpack-manifest-plugin');
 const babelRuntimeEntry = require.resolve('babel-preset-react-app');
 const babelRuntimeEntryHelpers = require.resolve(
   '@babel/runtime/helpers/esm/assertThisInitialized',
-  { paths: [babelRuntimeEntry] }
+  { paths: [babelRuntimeEntry] },
 );
 const babelRuntimeRegenerator = require.resolve('@babel/runtime/regenerator', {
   paths: [babelRuntimeEntry],
@@ -29,9 +35,8 @@ const babelRuntimeRegenerator = require.resolve('@babel/runtime/regenerator', {
 const ModuleScopePlugin = require('react-dev-utils/ModuleScopePlugin');
 const reactRefreshRuntimeEntry = require.resolve('react-refresh/runtime');
 const ReactRefreshWebpackPlugin = require('@pmmmwh/react-refresh-webpack-plugin');
-const reactRefreshWebpackPluginRuntimeEntry = require.resolve(
-  '@pmmmwh/react-refresh-webpack-plugin'
-);
+const reactRefreshWebpackPluginRuntimeEntry =
+  require.resolve('@pmmmwh/react-refresh-webpack-plugin');
 const getCSSModuleLocalIdent = require('react-dev-utils/getCSSModuleLocalIdent');
 const getCacheIdentifier = require('react-dev-utils/getCacheIdentifier');
 const StatsWriterPlugin = require('../plugins/webpackStatsPlugin');
@@ -49,7 +54,7 @@ const nodesRegex = /nodes\/.+/;
 
 const shouldUseSourceMap = process.env.GENERATE_SOURCEMAP === 'true';
 const imageInlineSizeLimit = parseInt(
-  process.env.IMAGE_INLINE_SIZE_LIMIT || '10000'
+  process.env.IMAGE_INLINE_SIZE_LIMIT || '10000',
 );
 
 module.exports = webpackEnv => {
@@ -146,7 +151,7 @@ module.exports = webpackEnv => {
             sourceMap: true,
             ...(preProcessor === 'sass-loader' ? { api: 'modern' } : {}),
           },
-        }
+        },
       );
     }
     return loaders;
@@ -168,7 +173,7 @@ module.exports = webpackEnv => {
           'babel-preset-react-app',
           'react-dev-utils',
           'react-scripts',
-        ]
+        ],
       ),
       sourceMaps: shouldUseSourceMap,
       inputSourceMap: shouldUseSourceMap,
@@ -204,9 +209,7 @@ module.exports = webpackEnv => {
     entry: [
       isEnvDevelopment &&
         shouldUseReactRefresh &&
-        require.resolve(
-          '@pmmmwh/react-refresh-webpack-plugin/client/ReactRefreshEntry.js'
-        ),
+        require.resolve('@pmmmwh/react-refresh-webpack-plugin/client/ReactRefreshEntry.js'),
       isEnvDevelopment &&
         shouldUseReactRefresh &&
         require.resolve('react-refresh/runtime'),
@@ -355,7 +358,7 @@ module.exports = webpackEnv => {
                     mode: 'icss',
                   },
                 },
-                'sass-loader'
+                'sass-loader',
               ),
               sideEffects: true,
             },
@@ -372,7 +375,7 @@ module.exports = webpackEnv => {
                     getLocalIdent: getCSSModuleLocalIdent,
                   },
                 },
-                'sass-loader'
+                'sass-loader',
               ),
             },
             // "file" loader makes sure those assets get served by WebpackDevServer.
@@ -512,7 +515,7 @@ module.exports = webpackEnv => {
           }, []);
 
           const _cachedFileMapper = Object.fromEntries(
-            fileMapper.map(([k, v]) => [v, k])
+            fileMapper.map(([k, v]) => [v, k]),
           );
 
           const _runtimePath = manifestFiles['runtime.js'];
@@ -530,7 +533,7 @@ module.exports = webpackEnv => {
             rootPath,
             files: manifestFiles,
             fileMap: Object.fromEntries(
-              fileMapper.filter(([, _path]) => jsRegex.test(_path))
+              fileMapper.filter(([, _path]) => jsRegex.test(_path)),
             ),
             entrypoints: Object.entries(entrypoints)
               .map(([nodesName, chunks]) => {
@@ -551,7 +554,7 @@ module.exports = webpackEnv => {
                             c[1].push(manifestFiles[n] ?? `${rootPath}/${n}`);
                           return c;
                         },
-                        [[], []]
+                        [[], []],
                       ),
                     _cachedFileMapper[filePath],
                   ];
@@ -573,7 +576,7 @@ module.exports = webpackEnv => {
             const entrypoints = chunks.filter(
               ({ initial, runtime, files }) =>
                 initial &&
-                !(runtime[0] == 'runtime' && files[0] === 'runtime.js')
+                !(runtime[0] == 'runtime' && files[0] === 'runtime.js'),
             );
 
             const refinedChunks = chunks.reduce(
@@ -589,7 +592,7 @@ module.exports = webpackEnv => {
                   parents,
                   runtime,
                   children,
-                }
+                },
               ) => {
                 for (let _runtime of runtime) {
                   if (collector.has(`${_runtime}::${id}`)) {
@@ -611,7 +614,7 @@ module.exports = webpackEnv => {
                       ...new Set([...merged.children, ...children]),
                     ];
                     console.warn(
-                      `'ID : ${_runtime}::${id}' is duplicated! \n This is the '@design/express/node-scripts' bug.`
+                      `'ID : ${_runtime}::${id}' is duplicated! \n This is the '@design/express/node-scripts' bug.`,
                     );
                   }
                   collector.set(`${_runtime}::${id}`, {
@@ -628,7 +631,7 @@ module.exports = webpackEnv => {
                 }
                 return collector;
               },
-              new Map()
+              new Map(),
             );
 
             const _cachedDepencyInfo = new Map();
@@ -655,14 +658,14 @@ module.exports = webpackEnv => {
                       _circularDependency.set(
                         `${_runtime}::${childID}`,
                         ancestorArr.slice(
-                          ancestorArr.indexOf(`${_runtime}::${childID}`)
-                        )
+                          ancestorArr.indexOf(`${_runtime}::${childID}`),
+                        ),
                       );
                       continue;
                     } else {
                       const { chunks, assets } = injectDependecyInfo(
                         `${_runtime}::${childID}`,
-                        new Set([...ancestor, `${_runtime}::${childID}`])
+                        new Set([...ancestor, `${_runtime}::${childID}`]),
                       );
                       _dependencies.push(...chunks);
                       _assets.push(...assets);
@@ -679,7 +682,7 @@ module.exports = webpackEnv => {
               if (_circularDependency.has(id)) {
                 const depIDs = _circularDependency.get(id);
                 depIDs.forEach(_id =>
-                  _cachedDepencyInfo.set(_id, _deduplicatedInfo)
+                  _cachedDepencyInfo.set(_id, _deduplicatedInfo),
                 );
                 _circularDependency.delete(id);
               }
@@ -695,7 +698,7 @@ module.exports = webpackEnv => {
                 for (let _runtime of runtime) {
                   const { chunks, assets } = injectDependecyInfo(
                     `${_runtime}::${id}`,
-                    new Set([`${_runtime}::${id}`])
+                    new Set([`${_runtime}::${id}`]),
                   );
                   _chunks.push(...chunks);
                   _assets.push(...assets);
@@ -706,7 +709,7 @@ module.exports = webpackEnv => {
                   assets: [...new Set(_assets)].map(p => join(rootPath, p)),
                 };
                 return collector;
-              }, {})
+              }, {}),
             );
           } catch (e) {
             console.error(e);
@@ -736,7 +739,7 @@ module.exports = webpackEnv => {
                   createHash('sha256')
                     .update(packinfo.name.replace('@', ''))
                     .digest('hex'),
-                  'build/'
+                  'build/',
                 )}", window.location.origin).toString()`,
               },
             ],
@@ -752,7 +755,7 @@ module.exports = webpackEnv => {
                   createHash('sha256')
                     .update(packinfo.name.replace('@', ''))
                     .digest('hex'),
-                  'build/'
+                  'build/',
                 )}", globalThis.location.origin).toString()`,
               },
               {
@@ -770,7 +773,7 @@ module.exports = webpackEnv => {
       // if there are any conflicts. This matches Node resolution mechanism.
       // https://github.com/facebook/create-react-app/issues/253
       modules: ['node_modules', paths.appNodeModules].concat(
-        modules.additionalModulePaths || []
+        modules.additionalModulePaths || [],
       ),
       extensions: ['.ts', '.tsx', '.js', '.jsx'],
       // alias: {
@@ -814,8 +817,8 @@ module.exports = webpackEnv => {
             return nodesRegex.test(pathData.chunk.name)
               ? 'nodes/[contenthash].js'
               : pathData.chunk.name === 'runtime'
-              ? '[name].js'
-              : '[name].[contenthash:8].js';
+                ? '[name].js'
+                : '[name].[contenthash:8].js';
           }
         : '[name].js',
       //   publicPath: `/installedext/${'Test'}/dist/`,
@@ -825,7 +828,7 @@ module.exports = webpackEnv => {
       chunkLoading: isEnvDevelopment ? 'jsonp' : 'import',
       chunkLoadingGlobal: `webpackChunk${packinfo.name.replace(
         /^@([^/]+)\/(.+)$/,
-        '$1_$2'
+        '$1_$2',
       )}`,
       globalObject: isEnvDevelopment ? 'globalThis' : 'dxnexivil',
       importFunctionName: 'fetcher',
