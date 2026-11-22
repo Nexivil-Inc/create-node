@@ -1,16 +1,16 @@
 {
   "name": "@design-express/node-template",
-  "version": "3.0.0+2611230114",
+  "version": "3.0.1+2611230134",
   "keywords": [
     "designexpress",
     "design Express",
     "nexivil"
   ],
-  "description": "esign Express™ Fabrica node template.",
+  "description": "Design Express™ Fabrica node template.",
   "author": "liradb2000",
   "license": "MIT",
   "engines": {
-    "node": ">=16"
+    "node": ">=22.15.0"
   },
   "files": [
     "template",

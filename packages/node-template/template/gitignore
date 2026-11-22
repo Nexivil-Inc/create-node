@@ -11,6 +11,9 @@
 # production
 /build
 
+# development build of `npm run watch` (node-scripts watch)
+/build-dev
+
 # misc
 .DS_Store
 .env.local
