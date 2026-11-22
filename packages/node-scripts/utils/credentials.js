@@ -1,7 +1,7 @@
 'use strict';
 // DESIGN EXPRESS credentials of `setUser` / `publish`, kept in the OS keychain (Windows Credential Manager, macOS
 // Keychain, Linux Secret Service) through @napi-rs/keyring (prebuilt binaries, no install script).
-// node-scripts < 2.2 used keytar: its entries are migrated on first use (see readKeytarWindows / legacy lookups).
+// node-scripts < 3.0 used keytar: its entries are migrated on first use (see readKeytarWindows / legacy lookups).
 
 const { Entry, findCredentials } = require('@napi-rs/keyring');
 const { spawnSync } = require('child_process');
@@ -36,7 +36,7 @@ function saved() {
 }
 
 /**
- * keytar (node-scripts < 2.2) on Windows: generic credentials named "<service>/<account>" with a UTF-8 secret, which
+ * keytar (node-scripts < 3.0) on Windows: generic credentials named "<service>/<account>" with a UTF-8 secret, which
  * @napi-rs/keyring cannot decode (it expects UTF-16). Read them once with CredEnumerate through PowerShell.
  */
 function readKeytarWindows() {
@@ -75,7 +75,7 @@ public static class NodeScriptsKeytar {
     .map(({ account, password }) => ({ account, password }));
 }
 
-/** Saved credentials, migrating keytar entries of node-scripts < 2.2 into the current store once. */
+/** Saved credentials, migrating keytar entries of node-scripts < 3.0 into the current store once. */
 function credentials() {
   let list = saved();
   if (list.length) return list;

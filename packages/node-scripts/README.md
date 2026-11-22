@@ -50,7 +50,7 @@ the last 20 builds are kept.
 ## Credentials
 
 `setUser` stores the e-mail and access token in the OS keychain through `@napi-rs/keyring` (prebuilt, no install
-script). Credentials saved by node-scripts < 2.2 (keytar) are migrated automatically on the first `publish`.
+script). Credentials saved by node-scripts < 3.0 (keytar) are migrated automatically on the first `publish`.
 
 ## Linting
 
@@ -58,7 +58,7 @@ node-scripts no longer bundles ESLint. New projects from `@design-express/node-t
 (`eslint.config.mjs`, `npm run lint`). Existing projects can delete `"eslintConfig"` from `package.json` and copy that
 file plus its devDependencies (`eslint@9`, `@eslint/js@9`, `eslint-plugin-react`, `eslint-plugin-react-hooks`, `globals`).
 
-## Compatibility notes (2.2)
+## Compatibility notes (3.0)
 
 - `runtime.js` is patched for the Fabrica installer (`x_fi`, `fetcher("./"+id)`, chunk field names). The patch is
   verified: if a webpack/terser update changes the runtime so a patch no longer applies, the build fails with the
