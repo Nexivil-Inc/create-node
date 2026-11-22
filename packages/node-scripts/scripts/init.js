@@ -17,7 +17,7 @@ process.on('unhandledRejection', err => {
 
 const fs = require('fs-extra');
 const path = require('path');
-const chalk = require('chalk');
+const chalk = require('../utils/colors');
 const execSync = require('child_process').execSync;
 const spawn = require('cross-spawn');
 const os = require('os');
@@ -177,10 +177,7 @@ module.exports = function (
   // Setup the script rules
   appPackage.scripts = templatePackage.scripts || {};
 
-  // Setup the eslint config
-  appPackage.eslintConfig = templatePackage.eslintConfig || {
-    extends: 'standard',
-  };
+  // ESLint 9 reads eslint.config.mjs (shipped in the template), not package.json "eslintConfig".
 
   // Add templatePackage keys/values to appPackage, replacing existing entries
   templatePackageToReplace.forEach(key => {

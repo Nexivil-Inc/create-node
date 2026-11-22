@@ -5,7 +5,7 @@
 
 'use strict';
 
-const { RuntimeGlobals } = require('webpack');
+const { runtime } = require('webpack');
 
 class RuntimeRequirementModder {
   /**
@@ -18,16 +18,16 @@ class RuntimeRequirementModder {
       'RuntimeRequirementModderPlugin',
       compilation => {
         compilation.hooks.runtimeRequirementInTree
-          .for(RuntimeGlobals.require)
+          .for(runtime.RuntimeGlobals.require)
           .tap('RuntimeRequirementModderPlugin', (chunk, set) => {
-            // set.add(RuntimeGlobals.externalInstallChunk);
-            set.add(RuntimeGlobals.ensureChunk);
-            set.add(RuntimeGlobals.ensureChunkHandlers);
-            set.add(RuntimeGlobals.onChunksLoaded);
-            // set.add(RuntimeGlobals.hmrDownloadUpdateHandlers);
-            set.add(RuntimeGlobals.getChunkScriptFilename);
-            set.add(RuntimeGlobals.moduleFactoriesAddOnly);
-            set.add(RuntimeGlobals.hasOwnProperty);
+            // set.add(runtime.RuntimeGlobals.externalInstallChunk);
+            set.add(runtime.RuntimeGlobals.ensureChunk);
+            set.add(runtime.RuntimeGlobals.ensureChunkHandlers);
+            set.add(runtime.RuntimeGlobals.onChunksLoaded);
+            // set.add(runtime.RuntimeGlobals.hmrDownloadUpdateHandlers);
+            set.add(runtime.RuntimeGlobals.getChunkScriptFilename);
+            set.add(runtime.RuntimeGlobals.moduleFactoriesAddOnly);
+            set.add(runtime.RuntimeGlobals.hasOwnProperty);
           });
       }
     );

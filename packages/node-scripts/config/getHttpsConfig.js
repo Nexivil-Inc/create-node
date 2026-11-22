@@ -11,7 +11,7 @@
 const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
-const chalk = require('react-dev-utils/chalk');
+const chalk = require('../utils/colors');
 const paths = require('./paths');
 
 // Ensure the certificate and key provided are valid and if not
@@ -52,7 +52,7 @@ function readEnvFile(file, type) {
 }
 
 // Get the https config
-// Return cert files if provided in env, otherwise just true or false
+// webpack-dev-server `server` option from HTTPS / SSL_CRT_FILE / SSL_KEY_FILE
 function getHttpsConfig() {
   const { SSL_CRT_FILE, SSL_KEY_FILE, HTTPS } = process.env;
   const isHttps = HTTPS === 'true';
@@ -66,9 +66,10 @@ function getHttpsConfig() {
     };
 
     validateKeyAndCerts({ ...config, keyFile, crtFile });
-    return { type: 'spdy', options: config };
+    return { server: { type: 'https', options: config } };
   }
-  return {};
+  // HTTPS=true without certificates: webpack-dev-server generates a self-signed one
+  return isHttps ? { server: 'https' } : {};
 }
 
 module.exports = getHttpsConfig;

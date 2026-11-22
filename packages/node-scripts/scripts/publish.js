@@ -14,15 +14,15 @@ const paths = require('../config/paths');
 
 const nameRegex = new RegExp(/^(?:@(?<scope>\w+)\/)?(?<name>.+)$/);
 const XNODE_MAGIC_NUMBER = Buffer.from([0x58, 0x4e, 0x30, 0x44, 0x65], 'hex');
-const openBrowser = require('react-dev-utils/openBrowser');
+const { openBrowser, choosePort } = require('../utils/devUtils');
 const express = require('express');
-const { choosePort } = require('react-dev-utils/WebpackDevServerUtils');
 const cors = require('cors');
 
 const FormData = require('form-data');
 
 const DEFAULT_PORT = parseInt(process.env.PORT, 10) || 5023;
-const HOST = process.env.HOST || '0.0.0.0';
+// the upload page of DESIGN EXPRESS fetches the pack from this local server: localhost only
+const HOST = process.env.HOST || 'localhost';
 const isLocalhost = process.env.localhost?.trim().toLowerCase() === 'true';
 
 function startServer(port, data) {

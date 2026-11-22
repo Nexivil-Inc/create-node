@@ -25,7 +25,7 @@ process.on('unhandledRejection', err => {
 require('../config/env');
 
 const path = require('path');
-const chalk = require('react-dev-utils/chalk');
+const chalk = require('../utils/colors');
 const fs = require('fs-extra');
 const bfj = require('bfj');
 const webpack = require('webpack');
@@ -34,15 +34,8 @@ const webpack = require('webpack');
 const configFactory = require('../config/webpack.config');
 const paths = require('../config/paths');
 // const deepmerge = require('lodash/merge')
-// const checkRequiredFiles = require('react-dev-utils/checkRequiredFiles');
-const formatWebpackMessages = require('react-dev-utils/formatWebpackMessages');
-const printHostingInstructions = require('react-dev-utils/printHostingInstructions');
-const FileSizeReporter = require('react-dev-utils/FileSizeReporter');
-const printBuildError = require('react-dev-utils/printBuildError');
+const { formatWebpackMessages, measureFileSizesBeforeBuild, printFileSizesAfterBuild, printBuildError } = require('../utils/devUtils');
 
-const measureFileSizesBeforeBuild =
-  FileSizeReporter.measureFileSizesBeforeBuild;
-const printFileSizesAfterBuild = FileSizeReporter.printFileSizesAfterBuild;
 const useYarn = fs.existsSync(paths.yarnLockFile);
 
 // These sizes are pretty large. We'll warn for bundles exceeding them.
@@ -67,13 +60,7 @@ const appPackage = require(paths.appPackageJson);
 const { getFileList } = require('../utils/getFiles');
 // We require that you explicitly set browsers and do not fall back to
 // browserslist defaults.
-const { checkBrowsers } = require('react-dev-utils/browsersHelper');
-checkBrowsers(paths.appPath, isInteractive)
-  .then(() => {
-    // First, read the current file sizes in build directory.
-    // This lets us display how much they changed later.
-    return measureFileSizesBeforeBuild(paths.appBuild);
-  })
+measureFileSizesBeforeBuild(paths.appBuild)
   .then(previousFileSizes => {
     // Remove all content but keep the directory so that
     // if you're in it, you don't end up in Trash
@@ -88,16 +75,7 @@ checkBrowsers(paths.appPath, isInteractive)
       if (warnings.length) {
         console.log(chalk.yellow('Compiled with warnings.\n'));
         console.log(warnings.join('\n\n'));
-        console.log(
-          '\nSearch for the ' +
-            chalk.underline(chalk.yellow('keywords')) +
-            ' to learn more about each warning.'
-        );
-        console.log(
-          'To ignore, add ' +
-            chalk.cyan('// eslint-disable-next-line') +
-            ' to the line before.\n'
-        );
+        console.log();
       } else {
         console.log(chalk.green('Compiled successfully.\n'));
       }
@@ -111,18 +89,8 @@ checkBrowsers(paths.appPath, isInteractive)
         WARN_AFTER_CHUNK_GZIP_SIZE
       );
       console.log();
-
-      // const appPackage = require(paths.appPackageJson);
-      const publicUrl = paths.publicUrlOrPath;
-      const publicPath = config.output.publicPath;
-      const buildFolder = path.relative(process.cwd(), paths.appBuild);
-      printHostingInstructions(
-        appPackage,
-        publicUrl,
-        publicPath,
-        buildFolder,
-        useYarn
-      );
+      const xnodeFile = `${appPackage.name.replace(/^@[^/]+\//, '')}-${appPackage.version}.xnode`;
+      console.log(`Pack it with ${chalk.cyan(`${useYarn ? 'yarn' : 'npm run'} pack`)} (→ ${xnodeFile}).`);
     },
     err => {
       const tscCompileOnError = process.env.TSC_COMPILE_ON_ERROR === 'true';

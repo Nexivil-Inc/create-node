@@ -11,38 +11,26 @@ const paths = require('../config/paths');
 const modules = require('./modules');
 
 const { ProvidePlugin, IgnorePlugin, DefinePlugin } = require('webpack');
-const TerserPlugin = (function () {
-  try {
-    return require('terser-webpack-plugin');
-  } catch {
-    return require('minimizer-webpack-plugin');
-  }
-})();
+const TerserPlugin = require('terser-webpack-plugin');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const CssMinimizerPlugin = require('css-minimizer-webpack-plugin');
 const CaseSensitivePathsPlugin = require('case-sensitive-paths-webpack-plugin');
 const { WebpackManifestPlugin } = require('webpack-manifest-plugin');
 
-const babelRuntimeEntry = require.resolve('babel-preset-react-app');
-const babelRuntimeEntryHelpers = require.resolve(
-  '@babel/runtime/helpers/esm/assertThisInitialized',
-  { paths: [babelRuntimeEntry] },
-);
-const babelRuntimeRegenerator = require.resolve('@babel/runtime/regenerator', {
-  paths: [babelRuntimeEntry],
-});
+// @babel/runtime files the compiled sources import (allowed by ModuleScopePlugin although outside src/)
+const babelRuntimeEntry = require.resolve('@babel/runtime/package.json');
+const babelRuntimeEntryHelpers = require.resolve('@babel/runtime/helpers/esm/assertThisInitialized');
+const babelRuntimeRegenerator = require.resolve('@babel/runtime/regenerator');
 
-const ModuleScopePlugin = require('react-dev-utils/ModuleScopePlugin');
+const { ModuleScopePlugin, getCSSModuleLocalIdent, getCacheIdentifier } = require('../utils/devUtils');
 const reactRefreshRuntimeEntry = require.resolve('react-refresh/runtime');
 const ReactRefreshWebpackPlugin = require('@pmmmwh/react-refresh-webpack-plugin');
 const reactRefreshWebpackPluginRuntimeEntry =
   require.resolve('@pmmmwh/react-refresh-webpack-plugin');
-const getCSSModuleLocalIdent = require('react-dev-utils/getCSSModuleLocalIdent');
-const getCacheIdentifier = require('react-dev-utils/getCacheIdentifier');
 const StatsWriterPlugin = require('../plugins/webpackStatsPlugin');
 const RuntimeModder = require('../plugins/runtimeModder');
 const RuntimeRequirementModder = require('../plugins/runtimeRequirementModder');
-const WebpackStringReplacer = require('webpack-string-replacer');
+const PublicPathPlugin = require('../plugins/publicPathPlugin');
 const packinfo = require(paths.appPackageJson);
 
 const cssRegex = /\.css$/;
@@ -149,7 +137,6 @@ module.exports = webpackEnv => {
           loader: require.resolve(preProcessor),
           options: {
             sourceMap: true,
-            ...(preProcessor === 'sass-loader' ? { api: 'modern' } : {}),
           },
         },
       );
@@ -168,12 +155,7 @@ module.exports = webpackEnv => {
       cacheCompression: false,
       cacheIdentifier: getCacheIdentifier(
         isEnvProduction ? 'production' : isEnvDevelopment && 'development',
-        [
-          'babel-plugin-named-asset-import',
-          'babel-preset-react-app',
-          'react-dev-utils',
-          'react-scripts',
-        ],
+        ['@babel/core', '@babel/preset-env', '@babel/runtime', 'babel-loader', '@design-express/node-scripts'],
       ),
       sourceMaps: shouldUseSourceMap,
       inputSourceMap: shouldUseSourceMap,
@@ -223,6 +205,15 @@ module.exports = webpackEnv => {
     module: {
       strictExportPresence: true,
       exprContextCritical: false,
+      parser: {
+        javascript: {
+          // webpack ≥5.10x also reports imports that are never used (e.g. type names left over in JS code copied
+          // from TypeScript); older node-scripts builds accepted them. Report missing imports as warnings and keep
+          // missing re-exports as errors.
+          importExportsPresence: 'warn',
+          reexportExportsPresence: 'error',
+        },
+      },
       rules: [
         shouldUseSourceMap && {
           enforce: 'pre',
@@ -302,7 +293,7 @@ module.exports = webpackEnv => {
             },
             {
               ...jsxBabelLoaderConfig,
-              test: /\.(jsx)$/,
+              test: /\.(jsx|tsx)$/,
               exclude: [
                 /node_modules/,
                 /@babel(?:\/|\\{1,2})runtime/,
@@ -311,7 +302,7 @@ module.exports = webpackEnv => {
             },
             {
               ...nonJsxBabelLoaderConfig,
-              test: /\.(js|mjs)$/,
+              test: /\.(js|mjs|cjs|ts)$/,
               exclude: [
                 /node_modules/,
                 /@babel(?:\/|\\{1,2})runtime/,
@@ -328,6 +319,8 @@ module.exports = webpackEnv => {
                   : isEnvDevelopment,
                 modules: {
                   mode: 'icss',
+                  namedExport: false,
+                  exportLocalsConvention: 'as-is',
                 },
               }),
               sideEffects: true,
@@ -342,6 +335,8 @@ module.exports = webpackEnv => {
                 modules: {
                   mode: 'local',
                   getLocalIdent: getCSSModuleLocalIdent,
+                  namedExport: false,
+                  exportLocalsConvention: 'as-is',
                 },
               }),
             },
@@ -356,6 +351,8 @@ module.exports = webpackEnv => {
                     : isEnvDevelopment,
                   modules: {
                     mode: 'icss',
+                    namedExport: false,
+                    exportLocalsConvention: 'as-is',
                   },
                 },
                 'sass-loader',
@@ -373,6 +370,8 @@ module.exports = webpackEnv => {
                   modules: {
                     mode: 'local',
                     getLocalIdent: getCSSModuleLocalIdent,
+                    namedExport: false,
+                    exportLocalsConvention: 'as-is',
                   },
                 },
                 'sass-loader',
@@ -395,7 +394,7 @@ module.exports = webpackEnv => {
               // by webpacks internal loaders.
               exclude: [
                 /^$/,
-                /\.(js|mjs|jsx|ts|tsx)$/,
+                /\.(js|mjs|cjs|jsx|ts|tsx)$/,
                 /\.html$/,
                 /\.json$/,
                 /\.wasm$/,
@@ -409,46 +408,6 @@ module.exports = webpackEnv => {
             // ** STOP ** Are you adding a new loader?
             // Make sure to add the new loader(s) before the "file" loader.
 
-            /** Legacy SVG load module */
-            // {
-            //   test: /\.svg?$/,
-            //   oneOf: [
-            //     {
-            //       use: [
-            //         {
-            //           loader: require.resolve('@svgr/webpack'),
-            //           options: {
-            //             prettier: false,
-            //             svgo: true,
-            //             svgoConfig: {
-            //               plugins: [
-            //                 {
-            //                   removeViewBox: false,
-            //                 },
-            //               ],
-            //             },
-            //             titleProp: true,
-            //           },
-            //         },
-            //         require.resolve('svg-inline-loader'),
-            //       ],
-            //       issuer: {
-            //         and: [/\.(ts|tsx|js|jsx|md|mdx)$/],
-            //       },
-            //     },
-            //     {
-            //       type: 'asset',
-            //       parser: {
-            //         dataUrlCondition: {
-            //           maxSize: 10 * 1024, // 4kb
-            //         },
-            //       },
-            //       generator: {
-            //         filename: 'static/media/[name].[hash:8].[ext]',
-            //       },
-            //     },
-            //   ],
-            // },
           ],
         },
       ].filter(Boolean),
@@ -471,13 +430,7 @@ module.exports = webpackEnv => {
         shouldUseReactRefresh &&
         new DefinePlugin({
           'process.env.NXV_NODE_NAME': `"${packinfo.name}"`,
-          // __webpack_public_path__: '/test.local/',
         }),
-      // isEnvProduction &&
-      //   new DefinePlugin({
-      //     __webpack_public_path__: 'x.nexivil.com',
-
-      //   }),
       // Watcher doesn't work well if you mistype casing in a path so we use
       // a plugin that prints an error when you attempt to do this.
       // See https://github.com/facebook/create-react-app/issues/240
@@ -725,47 +678,10 @@ module.exports = webpackEnv => {
         resourceRegExp: /^\.\/locale$/,
         contextRegExp: /moment$/,
       }),
-      new WebpackStringReplacer({
-        rules: [
-          {
-            applyStage: 'optimizeChunkAssets',
-            outputFileInclude:
-              /^(?!.+\/\w{20}\.worker\.wjs$)(?!.+\.worker\.\w{8}\.wjs$).+\.js$/,
-            replacements: [
-              {
-                pattern: /["'`]__WEBPACK_DEFINE_PUBLIC_PATH__["'`]/,
-                replacement: `new URL("${join(
-                  '/pkg/file',
-                  createHash('sha256')
-                    .update(packinfo.name.replace('@', ''))
-                    .digest('hex'),
-                  'build/',
-                )}", window.location.origin).toString()`,
-              },
-            ],
-          },
-          {
-            applyStage: 'optimizeChunkAssets',
-            outputFileInclude: /^.+(?:\/\w{20}\.worker|\.worker\.\w{8})\.wjs$/,
-            replacements: [
-              {
-                pattern: /["'`]__WEBPACK_DEFINE_PUBLIC_PATH__["'`]/,
-                replacement: `new URL("${join(
-                  '/pkg/file',
-                  createHash('sha256')
-                    .update(packinfo.name.replace('@', ''))
-                    .digest('hex'),
-                  'build/',
-                )}", globalThis.location.origin).toString()`,
-              },
-              {
-                pattern: /(\b|\\t|\\n)window(\b|\\t|\\n)/,
-                replacement: (_, $1, $2) => `${$1}globalThis${$2}`,
-              },
-            ],
-          },
-        ],
-      }),
+      isEnvProduction &&
+        new PublicPathPlugin({
+          base: join('/pkg/file', createHash('sha256').update(packinfo.name.replace('@', '')).digest('hex'), 'build/'),
+        }),
     ].filter(Boolean),
     resolve: {
       // This allows you to set a fallback for where webpack should look for modules.
@@ -1001,7 +917,29 @@ module.exports = webpackEnv => {
       ],
     },
     mode: isEnvProduction ? 'production' : 'development',
-    devtool: isEnvProduction ? shouldUseSourceMap : 'eval',
+    // Persistent cache: fast rebuilds after the first build (watch, start, repeated builds).
+    // NODE_SCRIPTS_CACHE=false disables it, NODE_SCRIPTS_CACHE_DIR moves it (default node_modules/.cache/node-scripts).
+    // One folder per Node ABI: packs are V8-serialized, and VS Code (Electron) and the terminal Node can't read each other's.
+    cache:
+      process.env.NODE_SCRIPTS_CACHE === 'false'
+        ? false
+        : {
+            type: 'filesystem',
+            name: webpackEnv,
+            cacheDirectory: require('path').join(
+              process.env.NODE_SCRIPTS_CACHE_DIR || require('path').join(paths.appNodeModules, '.cache', 'node-scripts'),
+              `node-${process.versions.modules}`,
+            ),
+            buildDependencies: {
+              config: [
+                __filename,
+                require.resolve('./babel.config'),
+                paths.appPackageJson,
+                ...[paths.appWiredWebpack + '.js'].filter(f => require('fs').existsSync(f)),
+              ],
+            },
+          },
+    devtool: isEnvProduction ? (shouldUseSourceMap ? 'source-map' : false) : 'eval',
     stats: {
       children: true,
     },
