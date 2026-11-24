@@ -66,3 +66,6 @@ file plus its devDependencies (`eslint@9`, `@eslint/js@9`, `eslint-plugin-react`
 - Imports of names a module does not export are warnings (webpack ≥ 5.10x also reports unused ones, e.g. type names in
   JS copied from TypeScript); missing re-exports stay errors.
 - CSS modules keep the default export (`import styles from './x.module.css'`).
+- Worker files (`*.worker.js`) need `@liradb2000/worker-loader` ≥ 4.0.1 (3.0.2): 4.0.0 declared no dependencies and
+  picked up the `loader-utils@3` that node-scripts hoists — `(0, _loaderUtils.getOptions) is not a function` in every
+  worker module; 4.0.1 brings its own `loader-utils@2`.
