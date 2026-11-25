@@ -69,3 +69,8 @@ file plus its devDependencies (`eslint@9`, `@eslint/js@9`, `eslint-plugin-react`
 - Worker files (`*.worker.js`) need `@liradb2000/worker-loader` ≥ 4.0.1 (3.0.2): 4.0.0 declared no dependencies and
   picked up the `loader-utils@3` that node-scripts hoists — `(0, _loaderUtils.getOptions) is not a function` in every
   worker module; 4.0.1 brings its own `loader-utils@2`.
+- Worker code has no `window`: in every worker bundle — emitted `chunks/*.wjs` and the workers `watch` / `start`
+  inline — `window` is rewritten to `globalThis` (3.0.3), including in the modules a worker imports, which the
+  globals transform compiles with `window.<name>`. 3.0.0–3.0.2 rewrote only worker files that load a chunk
+  (`ReferenceError: window is not defined` in the others, e.g. `gvcsThree.sena.worker.*.wjs`); before 3.0.3 the
+  inlined workers of development builds were never rewritten.

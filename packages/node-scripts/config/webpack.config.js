@@ -31,6 +31,7 @@ const StatsWriterPlugin = require('../plugins/webpackStatsPlugin');
 const RuntimeModder = require('../plugins/runtimeModder');
 const RuntimeRequirementModder = require('../plugins/runtimeRequirementModder');
 const PublicPathPlugin = require('../plugins/publicPathPlugin');
+const WorkerGlobalThisPlugin = require('../plugins/workerGlobalThisPlugin');
 const packinfo = require(paths.appPackageJson);
 
 const cssRegex = /\.css$/;
@@ -418,6 +419,8 @@ module.exports = webpackEnv => {
         process: 'process/browser',
         Buffer: ['buffer', 'Buffer'],
       }),
+      // worker code (emitted *.wjs and development's inlined workers): window → globalThis
+      new WorkerGlobalThisPlugin(),
       // Experimental hot reloading for React .
       // https://github.com/facebook/react/tree/main/packages/react-refresh
       isEnvDevelopment &&
