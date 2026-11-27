@@ -285,7 +285,11 @@ module.exports = webpackEnv => {
                   loader: require.resolve('@liradb2000/worker-loader'),
                   options: {
                     inline: 'fallback',
-                    forceInline: isEnvDevelopment,
+                    // development: workers start from a BLOB (the bundle is served from another origin than the page:
+                    // dev server, VS Code webview). INLINE_WORKER_SOURCE=false (the Fabrica VS Code extension's watch)
+                    // inlines only a loader of the emitted worker file instead of the worker's whole source — the main
+                    // bundle otherwise carries every worker bundle as a string (an nxv3d-plugins watch build: 155 MB).
+                    forceInline: isEnvDevelopment ? (process.env.INLINE_WORKER_SOURCE === 'false' ? 'url' : true) : false,
                     filename: 'chunks/[name].[contenthash:8].wjs',
                   },
                 },

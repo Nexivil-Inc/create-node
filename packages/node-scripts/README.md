@@ -74,3 +74,6 @@ file plus its devDependencies (`eslint@9`, `@eslint/js@9`, `eslint-plugin-react`
   globals transform compiles with `window.<name>`. 3.0.0–3.0.2 rewrote only worker files that load a chunk
   (`ReferenceError: window is not defined` in the others, e.g. `gvcsThree.sena.worker.*.wjs`); before 3.0.3 the
   inlined workers of development builds were never rewritten.
+- `INLINE_WORKER_SOURCE=false` (3.0.4, `@liradb2000/worker-loader` ≥ 4.1.0): development workers are created from a BLOB
+  that only loads the emitted `chunks/*.wjs` file (`importScripts`), instead of inlining each worker's whole source into the
+  main bundle. The Fabrica VS Code extension sets it for its watch builds (bundles loaded from a webview resource URL).
